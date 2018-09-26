@@ -71,18 +71,10 @@ std::map<std::string, unsigned int> funct =
 {
   {"addiu", 0x9},
   {"addu", 0x21},
-  {"and", 0x24},
   {"beq", 0x4},
-  {"bne", 0x5},
-  {"div", 0x1a},
   {"j", 0x2},
   {"lw", 0x23},
-  {"mfhi", 0x10},
-  {"mflo", 0x12},
-  {"mult", 0x18},
-  {"or", 0x25},
   {"slt", 0x2a},
-  {"subu", 0x23},
   {"sw", 0x2b},
   {"syscall", 0xc}
 };
@@ -96,38 +88,32 @@ unsigned int targaddr_:26;
 unsigned int funct_:6;
 
 
-unsigned int addu(unsigned int rd:5, unsigned int rs:5, unsigned int rt:5)
+void addu(unsigned int rd:5, unsigned int rs:5, unsigned int rt:5)
 {
   rd = rs + rt;
 };
 
-unsigned int addiu(unsigned int rt:5, unsigned int rs:5, unsigned int immed:16)
+void addiu(unsigned int rt:5, unsigned int rs:5, unsigned int immed:16)
 {
   rs = rt + immed;
 };
 
-
-unsigned int and(unsigned int rd:5, unsigned int rs:5, unsigned int rt:5)
+void lw(unsigned int rt:5, int offset, unsigned int a[])
 {
-  rd = rs & rt;
+  rt = a[offset];
 };
 
-unsigned int andi(unsigned int rd:5, unsigned int rs:5, unsigned int immed:16)
+void sw(unsigned int rt:5, int offset, unsigned int a[])
 {
-  rt = rs & immed;
+  a[offset] = rt;
 };
 
-//beq
-//bne
-//div
+void beq(unsigned int rt:5, unsigned int rs:5, std::string label)
+{
+  if (rt == rs)
+    goto label;
+}
 //j
-//lw
-//mfhi
-//mflo
-//mult
-//or
-//slt
-//subu
-//sw
+//void slt(
 //syscall
 
