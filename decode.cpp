@@ -3,6 +3,8 @@
 #include <iomanip>
 #include <stdio.h>
 
+#define MAXLINE 80
+
 std::bitset<6> funct;
 std::bitset<5> shamt;
 std::bitset<5> rd;
@@ -19,23 +21,33 @@ unsigned short opcode_;
 
 int main()
 {
+  char line[MAXLINE];
   unsigned long instruction;
-  char line[80] = {0};
   
-  while(fgets(line, 80, stdin))
+  while(fgets(line, MAXLINE, stdin))
     {
-      std::cout << "Enter hex instruction: ";
-      std::cin >> std::hex >> instruction;
+      if (sscanf(line, "%x", &instruction) == 1)
+	printf("line successfully read: %x\n", instruction);
+      else
+	printf("parse failed...");
+
       std::bitset<32> reg (instruction);
-      std::cout << reg << "\n";
-      std::cout << "instruction: " << instruction << std::endl;
-      
-      for (size_t i = 0; i < reg.size(); ++i)
+      std::cout << reg << std::endl;
+
+      for (size_t i = 32; i > 0; --i)
+	std::cout << i % 10;
+
+      std::cout << std::endl;
+
+      for (size_t i = reg.size(); i >= 0 ; --i)
 	{
 	  if (i <= 5)
 	    funct[i] = reg[i];
 	  else if (i > 5 && i <= 10)
-	    shamt[i] = reg[i];
+	    {
+	      shamt[i] = reg[i];
+	      std::cout << "rd[" << i << "] is: " << rd[i] << "\n";
+	    }
 	  else if (i > 10 && i <= 15)
 	    rd[i] = reg[i];
 	  else if (i > 15 && i <= 20)
@@ -44,13 +56,15 @@ int main()
 	    rs[i] = reg[i];
 	  else
 	    opcode[i] = reg[i];
-	}
-      std::cout << std::setw(8) << std::left << "opcode: " << std::setw(10) << std::right << opcode.to_ulong() << "\n"
-		<< std::setw(8) << std::left << "rs: "     << std::setw(10) << std::right << rs.to_ulong()      << "\n"
-		<< std::setw(8) << std::left << "rt: "     << std::setw(10) << std::right << rt.to_ulong()     << "\n"
-		<< std::setw(8) << std::left << "rd: "     << std::setw(10) << std::right << rd.to_ulong()    << "\n"
-		<< std::setw(8) << std::left << "shamt: "  << std::setw(10) << std::right << shamt.to_ulong()  << "\n"
-		<< std::setw(8) << std::left << "funct: "  << std::setw(10) << std::right << std::hex << funct.to_ulong()  << std::endl;
-    }    
+	    }
+  
+      std::cout << std::setw(8) << std::left << "opcode: " << std::setw(10) << std::right << opcode << "\n"
+		<< std::setw(8) << std::left << "rs: "     << std::setw(10) << std::right << rs << "\n"
+		<< std::setw(8) << std::left << "rt: "     << std::setw(10) << std::right << rt << "\n"
+		<< std::setw(8) << std::left << "rd: "     << std::setw(10) << std::right << rd << "\n"
+		<< std::setw(8) << std::left << "shamt: "  << std::setw(10) << std::right << shamt << "\n"
+		<< std::setw(8) << std::left << "funct: "  << std::setw(10) << std::right << funct << std::endl;
+          
+}    
   return 0;
 }
