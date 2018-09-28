@@ -2,15 +2,15 @@ CPP = g++
 DEBUG = -O0 -g
 C11 = -std=c++11
 
-all: decode.exe
+all: decode2.exe
 
-decode.exe: decode.o
+decode2.exe: decode-2.o
 	@echo "Creating..."
 	$(CPP) -o $@ $< $(C11)
 
-decode.o: decode.cpp 
+decode-2.o: decode-2.cpp 
 	@echo "Checking..."
-	$(CPP) $(DEBUG) -c decode.cpp $(C11)
+	$(CPP) $(DEBUG) -c decode-2.cpp $(C11)
 
 clean:
 	@echo "Cleaning..."

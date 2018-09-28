@@ -22,7 +22,7 @@ unsigned short opcode_;
 int main()
 {
   char line[MAXLINE];
-  unsigned long instruction;
+  unsigned int instruction;
   
   while(fgets(line, MAXLINE, stdin))
     {
@@ -38,16 +38,18 @@ int main()
 	std::cout << i % 10;
 
       std::cout << std::endl;
+      
+      for (size_t i = 0; i < reg.size(); ++i)
+	std::cout << reg[i];
+      
+      std::cout << std::endl;
 
       for (size_t i = reg.size(); i >= 0 ; --i)
 	{
 	  if (i <= 5)
 	    funct[i] = reg[i];
 	  else if (i > 5 && i <= 10)
-	    {
 	      shamt[i] = reg[i];
-	      std::cout << "rd[" << i << "] is: " << rd[i] << "\n";
-	    }
 	  else if (i > 10 && i <= 15)
 	    rd[i] = reg[i];
 	  else if (i > 15 && i <= 20)
@@ -58,12 +60,12 @@ int main()
 	    opcode[i] = reg[i];
 	    }
   
-      std::cout << std::setw(8) << std::left << "opcode: " << std::setw(10) << std::right << opcode << "\n"
-		<< std::setw(8) << std::left << "rs: "     << std::setw(10) << std::right << rs << "\n"
-		<< std::setw(8) << std::left << "rt: "     << std::setw(10) << std::right << rt << "\n"
-		<< std::setw(8) << std::left << "rd: "     << std::setw(10) << std::right << rd << "\n"
-		<< std::setw(8) << std::left << "shamt: "  << std::setw(10) << std::right << shamt << "\n"
-		<< std::setw(8) << std::left << "funct: "  << std::setw(10) << std::right << funct << std::endl;
+      std::cout << std::setw(8) << std::left << "opcode" << std::setw(10) << std::right << opcode << "\n"
+		<< std::setw(8) << std::left << "rs"     << std::setw(10) << std::right << rs << "\n"
+		<< std::setw(8) << std::left << "rt"     << std::setw(10) << std::right << rt << "\n"
+		<< std::setw(8) << std::left << "rd"     << std::setw(10) << std::right << rd << "\n"
+		<< std::setw(8) << std::left << "shamt"  << std::setw(10) << std::right << shamt << "\n"
+		<< std::setw(8) << std::left << "funct"  << std::setw(10) << std::right << funct << std::endl;
           
 }    
   return 0;
