@@ -2,7 +2,7 @@ CPP = g++
 DEBUG = -O0 -g
 C11 = -std=c++11
 
-all: decode2.exe
+all: decode2.exe clean
 
 decode2.exe: decode-2.o
 	@echo "Creating..."
