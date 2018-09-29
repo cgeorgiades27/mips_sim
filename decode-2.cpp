@@ -20,7 +20,13 @@ int main()
       sscanf(line, "%x", &instruction);
       printf("instruction parsed: %x\n", instruction);
       std::bitset<32> reg(instruction);
-      std::cout << "reg contents: " << reg << std::endl;    
+      std::cout << reg << std::endl;    
+
+      for (size_t i = 32; i > 0; --i)
+	std::cout << i % 10;
+
+      std::cout << std::endl;
+      
       size_t j = 0;
       size_t k = 0;
       size_t l = 0;
@@ -65,13 +71,13 @@ int main()
       rt_ = rt.to_ulong();
       opcode_ = opcode.to_ulong();  
       
-      std::cout << std::setw(8) << std::left << "opcode" << std::setw(10) << std::right << opcode_ << "\n"
-		<< std::setw(8) << std::left << "rs"     << std::setw(10) << std::right << rs_ << "\n"
-		<< std::setw(8) << std::left << "rt"     << std::setw(10) << std::right << rt_ << "\n"
-		<< std::setw(8) << std::left << "rd"     << std::setw(10) << std::right << rd_ << "\n"
-		<< std::setw(8) << std::left << "shamt"  << std::setw(10) << std::right << shamt_ << "\n"
-		<< std::setw(8) << std::left << "funct"  << std::setw(10) << std::right << funct_ << "\n"
-		<< "reg[15]: " << reg[15] << std::endl;
+      std::cout << std::setw(8) << std::left << "opcode" << std::setw(10) << std::right << std::hex << opcode_ << "\n"
+		<< std::setw(8) << std::left << "rs"     << std::setw(10) << std::right << std::hex << rs_ << "\n"
+		<< std::setw(8) << std::left << "rt"     << std::setw(10) << std::right << std::hex << rt_ << "\n"
+		<< std::setw(8) << std::left << "rd"     << std::setw(10) << std::right << std::hex <<  rd_ << "\n"
+		<< std::setw(8) << std::left << "shamt"  << std::setw(10) << std::right << std::hex << shamt_ << "\n"
+		<< std::setw(8) << std::left << "funct"  << std::setw(10) << std::right <<std::hex << funct_ << "\n";
     }
+
   return 0;
 }
