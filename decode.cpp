@@ -1,72 +1,75 @@
 #include <iostream>
-#include <bitset>
 #include <iomanip>
 #include <stdio.h>
 
 #define MAXLINE 80
 
-std::bitset<6> funct;
-std::bitset<5> shamt;
-std::bitset<5> rd;
-std::bitset<5> rt;
-std::bitset<5> rs;
-std::bitset<6> opcode;
+char line[MAXLINE];
+unsigned int funct_, shamt_, rd_, rs_, rt_, opcode_, addr_, immed_;
+unsigned int instruction;
 
-unsigned short funct_;
-unsigned short shamt_;
-unsigned short rd_;
-unsigned short rt_;
-unsigned short rs_;
-unsigned short opcode_;
+void printR(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int rd, unsigned int shamt, unsigned int funct);
+void printI(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int immed);
+void printJ(unsigned int opcode, unsigned int addr);
+void findR(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int rd, unsigned int shamt, unsigned int funct);
 
 int main()
 {
-  char line[MAXLINE];
-  unsigned int instruction;
-  
   while(fgets(line, MAXLINE, stdin))
     {
-      if (sscanf(line, "%x", &instruction) == 1)
-	printf("line successfully read: %x\n", instruction);
-      else
-	printf("parse failed...");
+      sscanf(line, "%x", &instruction);
+      printf("instruction parsed: %x\n", instruction);
 
-      std::bitset<32> reg (instruction);
-      std::cout << reg << std::endl;
+      // decode opcode first
+      opcode_ = instruction >> 26;
 
-      for (size_t i = 32; i > 0; --i)
-	std::cout << i % 10;
-
-      std::cout << std::endl;
-      
-      for (size_t i = 0; i < reg.size(); ++i)
-	std::cout << reg[i];
-      
-      std::cout << std::endl;
-
-      for (size_t i = reg.size(); i >= 0 ; --i)
+      // determine instruction type...
+      if (opcode_ == 0)
 	{
-	  if (i <= 5)
-	    funct[i] = reg[i];
-	  else if (i > 5 && i <= 10)
-	      shamt[i] = reg[i];
-	  else if (i > 10 && i <= 15)
-	    rd[i] = reg[i];
-	  else if (i > 15 && i <= 20)
-	    rt[i] = reg[i];
-	  else if (i > 20 && i <= 25)
-	    rs[i] = reg[i];
-	  else
-	    opcode[i] = reg[i];
-	    }
-  
-      std::cout << std::setw(8) << std::left << "opcode" << std::setw(10) << std::right << opcode << "\n"
-		<< std::setw(8) << std::left << "rs"     << std::setw(10) << std::right << rs << "\n"
-		<< std::setw(8) << std::left << "rt"     << std::setw(10) << std::right << rt << "\n"
-		<< std::setw(8) << std::left << "rd"     << std::setw(10) << std::right << rd << "\n"
-		<< std::setw(8) << std::left << "shamt"  << std::setw(10) << std::right << shamt << "\n"
-		<< std::setw(8) << std::left << "funct"  << std::setw(10) << std::right << funct << std::endl;
-          
-}    
+	  funct_ = instruction << 26 >> 26;
+	  shamt_ = instruction << 21 >> 27;
+	  rd_ = instruction << 16 >> 27;
+	  rs_ = instruction << 11 >> 27;
+	  rt_ = instruction << 6 >> 27;
+	  printR(opcode_, rt_, rt_, rd_, shamt_, funct_);
+	}
+
+      else if (opcode_ == 2 || opcode_ == 3)
+	{
+	  addr_ = instruction << 7 >> 7;
+	  printJ(opcode_, addr_);
+	}
+      else
+	{
+	  rs_ = instruction << 11 >> 27;
+	  rt_ = instruction << 6 >> 27;
+	  immed_ = instruction << 16 >> 16;
+	  printI(opcode_, rs_, rt_, immed_);
+	}
+    }
   return 0;
+} // end main
+
+void printR(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int rd, unsigned int shamt, unsigned int funct)
+{
+  std::cout << std::setw(8) << std::left << "opcode" << std::hex << std::setw(4) << std::right << opcode << "\n"
+	    << std::setw(8) << std::left << "rs"     << std::hex << std::setw(4) << std::right << rs     << "\n"
+	    << std::setw(8) << std::left << "rt"     << std::hex << std::setw(4) << std::right << rt     << "\n"
+	    << std::setw(8) << std::left << "rd"     << std::hex << std::setw(4) << std::right << rd     << "\n"
+	    << std::setw(8) << std::left << "shamt"  << std::hex << std::setw(4) << std::right << shamt  << "\n"
+	    << std::setw(8) << std::left << "funct"  << std::hex << std::setw(4) << std::right << funct  << "\n";
+}
+
+void printI(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int immed)
+{
+  std::cout << std::setw(8) << std::left << "opcode" << std::hex << std::setw(4) << std::right << opcode << "\n"
+	    << std::setw(8) << std::left << "rs"     << std::hex << std::setw(4) << std::right << rs     << "\n"
+	    << std::setw(8) << std::left << "rt"     << std::hex << std::setw(4) << std::right << rt     << "\n"
+	    << std::setw(8) << std::left << "immed"  << std::hex << std::setw(4) << std::right << immed  << "\n";
+}
+
+void printJ(unsigned int opcode, unsigned int addr)
+{
+  std::cout << std::setw(8) << std::left << "opcode" << std::hex << std::setw(4) << std::right << opcode << "\n"
+	    << std::setw(8) << std::left << "addr"     << std::hex << std::setw(4) << std::right << addr << "\n";
 }

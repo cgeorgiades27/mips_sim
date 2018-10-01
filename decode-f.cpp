@@ -11,10 +11,10 @@ unsigned int instruction;
 void printR(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int rd, unsigned int shamt, unsigned int funct);
 void printI(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int immed);
 void printJ(unsigned int opcode, unsigned int addr);
+void findR(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int rd, unsigned int shamt, unsigned int funct);
 
 int main()
 {
-  
   while(fgets(line, MAXLINE, stdin))
     {
       sscanf(line, "%x", &instruction);
@@ -33,7 +33,7 @@ int main()
 	  rt_ = instruction << 6 >> 27;
 	  printR(opcode_, rt_, rt_, rd_, shamt_, funct_);
 	}
-      
+
       else if (opcode_ == 2 || opcode_ == 3)
 	{
 	  addr_ = instruction << 7 >> 7;
@@ -46,7 +46,7 @@ int main()
 	  immed_ = instruction << 16 >> 16;
 	  printI(opcode_, rs_, rt_, immed_);
 	}
-    } 
+    }
   return 0;
 } // end main
 
@@ -73,5 +73,3 @@ void printJ(unsigned int opcode, unsigned int addr)
   std::cout << std::setw(8) << std::left << "opcode" << std::hex << std::setw(4) << std::right << opcode << "\n"
 	    << std::setw(8) << std::left << "addr"     << std::hex << std::setw(4) << std::right << addr << "\n";
 }
-
-
