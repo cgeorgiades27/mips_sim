@@ -13,43 +13,38 @@ void printI(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int 
 void printJ(unsigned int opcode, unsigned int addr);
 void findR(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int rd, unsigned int shamt, unsigned int funct);
 
-int main()
+void decodeR(unsigned int instruction)
 {
-  while(fgets(line, MAXLINE, stdin))
-    {
-      sscanf(line, "%x", &instruction);
-      printf("instruction parsed: %x\n", instruction);
+  // decode opcode first
+  opcode_ = instruction >> 26;
 
-      // decode opcode first
-      opcode_ = instruction >> 26;
-
-      // determine instruction type...
-      if (opcode_ == 0)
-	{
-	  funct_ = instruction << 26 >> 26;
+  // determine instruction type...
+  if (opcode_ == 0)
+  {
+    funct_ = instruction << 26 >> 26;
 	  shamt_ = instruction << 21 >> 27;
 	  rd_ = instruction << 16 >> 27;
 	  rs_ = instruction << 11 >> 27;
 	  rt_ = instruction << 6 >> 27;
 	  printR(opcode_, rt_, rt_, rd_, shamt_, funct_);
 	}
-
-      else if (opcode_ == 2 || opcode_ == 3)
+  // J instruction
+  else if (opcode_ == 2 || opcode_ == 3)
 	{
-	  addr_ = instruction << 7 >> 7;
+    addr_ = instruction << 7 >> 7;
 	  printJ(opcode_, addr_);
 	}
-      else
+  // I instruction
+  else
 	{
 	  rs_ = instruction << 11 >> 27;
 	  rt_ = instruction << 6 >> 27;
 	  immed_ = instruction << 16 >> 16;
 	  printI(opcode_, rs_, rt_, immed_);
 	}
-    }
-  return 0;
-} // end main
+}
 
+// Printing for testing
 void printR(unsigned int opcode, unsigned int rs, unsigned int rt, unsigned int rd, unsigned int shamt, unsigned int funct)
 {
   std::cout << std::setw(8) << std::left << "opcode" << std::hex << std::setw(4) << std::right << opcode << "\n"
