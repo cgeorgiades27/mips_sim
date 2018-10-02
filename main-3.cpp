@@ -8,6 +8,7 @@
 #include <iostream>
 #include <map>
 #include <iomanip>
+#include <queue>
 
  #define MAXLINE 80
  char line[MAXLINE];
