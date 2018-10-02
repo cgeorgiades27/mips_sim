@@ -58,7 +58,7 @@ struct Input
 
 std::map<unsigned int, std::string, unsigned int> reg =
 {
-  {0, "$zero", 0}
+  {0, "$zero", 0},
   {1, "$at", 0},
   {2, "$v0", 0},
   {3, "$v1", 0},
