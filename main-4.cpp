@@ -16,38 +16,34 @@
 char line[MAXLINE];
 unsigned int inst;
 
-enum class InstructionType
+class Instruction
 {
-  R, I, J, S
+    public:
+    Instruction();
+    ~Instruction();
+    unsigned int opcode_;
+    std::string command_;
 };
 
-struct Input 
+class Syscall : public Instruction
 {
-  InstructionType type;
-  union
-  {
-    syscall s_;
-    R_Format r_;
-    I_Format i_;
-    J_Format j_;
-  };
+    public:
+    Syscall() { command_ = "syscall"; };
+    ~Syscall();
+    void printS();
 };
 
-struct syscall
+class R_Format : public Instruction
 {
-  std::string command_;
-  void printS();
-};
-
-struct R_Format
-{
-  unsigned int opcode_;
-  unsigned int rs_;
-  unsigned int rt_;
-  unsigned int rd_;
-  unsigned int shamt_;
-  unsigned int funct_;
-  std::string command_;
+    public:
+    R_Format();
+    unsigned int opcode_ = 0;
+    unsigned int rs_;
+    unsigned int rt_;
+    unsigned int rd_;
+    unsigned int shamt_;
+    unsigned int funct_;
+    std::string command_;
   void printR();
   //void setR();
 };
@@ -69,6 +65,8 @@ struct J_Format
   std::string command_;
   void printJ();
 };
+
+
 
 std::map<unsigned int, std::string> reg
 {
@@ -94,10 +92,10 @@ std::map<unsigned int, std::string> funct
   {9, "addiu"},
   {33, "addu"},
   {4, "beq"},
-	{2, "j"},
-	{35, "lw"},
+  {2, "j"},
+  {35, "lw"},
   {42, "slt"},
-	{43, "sw"},
+  {43, "sw"},
   {12, "syscall"}
 };
 
@@ -107,16 +105,16 @@ int main()
   {
     sscanf(line, "%x", &inst);
        
-    Input input;
+       Input input;
     
     // Test instruction type and create object
     if (inst >> 26 == 0)
 	  {
       if (inst == 0x00000000c)
 	    {
-        input.type = InstructionType::S;
-        input.s_ = { funct[inst] };
-        input.s_.printS();
+            input.type = InstructionType::S;
+            t.s_ = { funct[inst] };
+            t.s_.printS();
       }
 
       else
