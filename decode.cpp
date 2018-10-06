@@ -13,14 +13,12 @@
 
 #define MAXLINE 80
 
+// global variables
 char line[MAXLINE];
 unsigned int inst;
 unsigned int regs[32];
 unsigned int word;
-
 int pc = 0;
-
-//void printRegs(Input);
 
 enum class InstructionType
 {
@@ -145,7 +143,7 @@ int main()
       {
         input.type = InstructionType::S;
         input.sData = {inst >> 26};
-        input.sData.printS();
+        //input.sData.printS();
         q.push(input);
       }
 
@@ -155,23 +153,25 @@ int main()
         input.rData =
             {
                 inst >> 26,
-                inst << 11 >> 27,
                 inst << 6 >> 27,
+                inst << 11 >> 27,
                 inst << 16 >> 27,
                 inst << 21 >> 27,
                 inst << 26 >> 26};
-        input.rData.printR();
+        q.push(input);
+        //input.rData.printR();
       }
     }
 
-    else if (inst == 2 || inst == 3)
+    else if (inst >> 26 == 2 || inst >> 26 == 3)
     {
       input.type = InstructionType::J;
       input.jData =
           {
               inst >> 26,
               inst << 7 >> 7};
-      input.jData.printJ();
+      q.push(input);
+      //input.jData.printJ();
     }
 
     else
@@ -180,105 +180,88 @@ int main()
       input.iData =
           {
               inst >> 26,
-              inst << 11 >> 27,
               inst << 6 >> 27,
+              inst << 11 >> 27,
               inst << 16 >> 16};
-      input.iData.printI();
+      q.push(input);
+      //input.iData.printI();
     }
-    // store object data on queue
-    //printRegs(input);
-    ++pc; // increment program counter
-  }
-  while (!q.empty())
-  {
-    size_t i = 0;
-    
-    std::cout << i << ": ";
+
+    std::cout << std::setw(2) << std::right << pc << std::setw(2) << std::left << ":";
 
     if (input.type == InstructionType::R)
-      q.front().rData.printR();
+    {
+      q.back().rData.printR();
+    }
     else if (input.type == InstructionType::S)
-      q.front().sData.printS();
+    {
+      q.back().sData.printS();
+    }
     else if (input.type == InstructionType::I)
-      q.front().iData.printI();
+    {
+      q.back().iData.printI();
+    }
     else
-      q.front().jData.printJ();
-    q.pop();
+    {
+      q.back().jData.printJ();
+    }
+    ++pc;
   }
   return 0;
 }
 
 void R_Format::printR()
 {
-  std::cout
-      << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rt_] + "," + reg[rs_] << std::endl;
-  /*
-      
-      FOR TESTING ONLY....
-
-      << std::setw(10) << "opcode" << opcode_ << "\n"
-      << std::setw(10) << "rs" << rs_ << "\n"
-      << std::setw(10) << "rt" << rt_ << "\n"
-      << std::setw(10) << "rd" << rd_ << "\n"
-      << std::setw(10) << "shamt" << shamt_ << "\n"
-      << std::setw(10) << "funct" << std::endl*/
+  std::cout << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << std::endl;
 }
 
 void I_Format::printI()
 {
-  std::cout
-      << std::setw(10) << std::left << funct[opcode_] << reg[rt_] << "," << reg[rs_] << "," << immed_ << std::endl;
-  /*
-
-    FOR TESTING ONLY...
-
-      << std::setw(8) << std::left << "opcode" << std::hex << std::setw(4) << std::right << opcode_ << "\n"
-      << std::setw(8) << std::left << "rs" << std::hex << std::setw(4) << std::right << rs_ << "\n"
-      << std::setw(8) << std::left << "rt" << std::hex << std::setw(4) << std::right << rt_ << "\n"
-      << std::setw(8) << std::left << "immed" << std::hex << std::setw(4) << std::right << immed_ << "\n"*/
+  switch (opcode_)
+  {
+  case 35:
+  case 43:
+  {
+    std::cout
+        << std::setw(10)
+        << std::left
+        << funct[opcode_]
+        << reg[rt_] << ","
+        << immed_
+        << "(" << reg[rs_] << ")" << std::endl;
+    break;
+  }
+  case 4:
+  {
+    std::cout
+        << std::setw(10)
+        << std::left
+        << funct[opcode_]
+        << reg[rs_] << ","
+        << reg[rt_] << ","
+        << immed_ << std::endl;
+    break;
+  }
+  default:
+  {
+    std::cout
+        << std::setw(10)
+        << std::left
+        << funct[opcode_]
+        << reg[rt_] << ","
+        << reg[rs_] << ","
+        << immed_ << std::endl;
+    break;
+  }
+  }
 }
 
 void J_Format::printJ()
 {
-  std::cout << std::setw(10) << funct[opcode_] << addr_;
-  /*
-      << std::setw(8) << std::left << "opcode" << std::hex << std::setw(4) << std::right << opcode_ << "\n"
-      << std::setw(8) << std::left << "addr" << std::hex << std::setw(4) << std::right << addr_ << "\n";*/
+  std::cout << std::setw(10) << std::left << funct[opcode_] << addr_ << std::endl;
 }
 
 void System_Call::printS()
 {
   std::cout << "syscall" << std::endl;
-  /*
-  std::cout << std::setw(8) << "opcode" << opcode_ << std::endl
-            << std::setw(8) << "funct" << funct_ << std::endl;*/
-}
-
-void printRegs(Input i)
-{
-
-  std::cout << std::setw(4) << std::left << "PC:" << pc << std::endl; //  PC: xx
-  /*
-  if (i.type == InstructionType::R)
-  {
-    std::cout << setw(10) << left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << "\n" << endl;
-  }
-
-
-inst: addiu     $v0,$zero,5
-
-regs:
-   $zero =     0     $at =     0     $v0 =     5     $v1 =     0
-     $a0 =     0     $a1 =     0     $a2 =     0     $a3 =     0
-     $t0 =     0     $t1 =     0     $t2 =     0     $t3 =     0
-     $t4 =     0     $t5 =     0     $t6 =     0     $t7 =     0
-     $s0 =     0     $s1 =     0     $s2 =     0     $s3 =     0
-     $s4 =     0     $s5 =     0     $s6 =     0     $s7 =     0
-     $t8 =     0     $t9 =     0     $k0 =     0     $k1 =     0
-     $gp =    18     $sp =     0     $fp =     0     $ra =     0
-     $lo =     0     $hi =     0
-
-data memory:
-   data[  0] =     0
-*/
 }
