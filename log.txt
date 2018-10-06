@@ -18,7 +18,7 @@ af820000
 2402000a
 0000000c
 00000000
-georgiad@linprog7.cs.fsu.edu:~/cda3101/asg3>more log.txt 
+ 
 insts:
    0: addu      $s0,$zero,$zero
    1: addu      $s1,$zero,$zero
@@ -202,7 +202,6 @@ regs:
 
 data memory:
    data[  0] =     3
-
 
 PC: 9
 inst: syscall
