@@ -51,7 +51,8 @@ struct I_Format
   unsigned int immed_;
   void printI();
   void addiu();
-  void setI();
+  void lw(std::vector<unsigned int> a);
+  void sw(std::vector<unsigned int> a);
 };
 
 struct J_Format
@@ -80,7 +81,7 @@ struct Input
   };
 };
 
-void printI(Input);
+void printI(Input); // print report
 
 std::map<unsigned int, std::string> reg{
   {0, "$zero"},
@@ -117,8 +118,8 @@ std::map<unsigned int, std::string> reg{
   {31, "$ra"},
   {32, "$lo"},
   {33, "$hi"}
-  };
-  
+};
+
 std::map<unsigned int, std::string> funct{
     {9, "addiu"},
     {33, "addu"},
@@ -187,7 +188,7 @@ int main()
         inst << 11 >> 27,
         inst << 16 >> 16
       };
-            } // end parse of o code
+    } // end parse of o code
 
             // begin function calls
             switch (inst >> 26)
@@ -223,7 +224,7 @@ int main()
       return 0;
     }
 
-    void sCall(unsigned int v0)
+    void S_Format::sCall(unsigned int v0)
     {
       if (v0 == 10)
         exit (EXIT_SUCCESS);
@@ -236,6 +237,15 @@ int main()
         std::cout << v0 << "\n";
       }
     }
+
+  void lw(unsigned int rt_, unsigned int immed_, std::vector<unsigned int> a)
+  {
+    regs[regs.find(rt_)->first] = a
+  }
+  void sw(std::vector<unsigned int> a)
+  {
+
+  }
 
     void R_Format::slt(unsigned int rd_, unsigned int rs_, unsigned int rt_)
     {
