@@ -18,6 +18,7 @@ char line[MAXLINE];
 unsigned int inst;
 unsigned int regs[32];
 unsigned int word;
+unsigned int gp;
 int pc = 0;
 
 enum class InstructionType
@@ -47,6 +48,8 @@ struct I_Format
   unsigned int rt_;
   unsigned int immed_;
   void printI();
+  void addiu();
+  void setI();
 };
 
 struct J_Format
@@ -119,6 +122,7 @@ std::map<unsigned int, std::string> funct{
     {12, "syscall"}};
 
 std::queue<Input> q;
+std::vector<unsigned int> regs {34, 0};
 
 int main()
 {
@@ -126,88 +130,97 @@ int main()
 
   while (fgets(line, MAXLINE, stdin))
   {
-    /*
-    if (sscanf(line, "%u, %u", &regs[28], &word) == 2)
+
+    if (sscanf(line,"%u%u", &gp, &word) == 2)
     {
-      cout << word;
+      
     }
     else
     {
-      */
 
-    sscanf(line, "%x", &inst);
+      sscanf(line, "%x", &inst);
 
-    if (inst >> 26 == 0)
-    {
-      if (inst == 0x00000000c)
+      if (inst >> 26 == 0)
       {
-        input.type = InstructionType::S;
-        input.sData = {inst >> 26};
-        //input.sData.printS();
+        if (inst == 0x00000000c)
+        {
+          input.type = InstructionType::S;
+          input.sData = {inst >> 26};
+          q.push(input);
+        }
+
+        else
+        {
+          input.type = InstructionType::R;
+          input.rData =
+              {
+                  inst >> 26,
+                  inst << 6 >> 27,
+                  inst << 11 >> 27,
+                  inst << 16 >> 27,
+                  inst << 21 >> 27,
+                  inst << 26 >> 26};
+          q.push(input);
+        }
+      }
+
+      else if (inst >> 26 == 2 || inst >> 26 == 3)
+      {
+        input.type = InstructionType::J;
+        input.jData =
+            {
+                inst >> 26,
+                inst << 7 >> 7};
         q.push(input);
       }
 
       else
       {
-        input.type = InstructionType::R;
-        input.rData =
+        input.type = InstructionType::I;
+        input.iData =
             {
                 inst >> 26,
                 inst << 6 >> 27,
                 inst << 11 >> 27,
-                inst << 16 >> 27,
-                inst << 21 >> 27,
-                inst << 26 >> 26};
+                inst << 16 >> 16};
         q.push(input);
-        //input.rData.printR();
       }
-    }
 
-    else if (inst >> 26 == 2 || inst >> 26 == 3)
-    {
-      input.type = InstructionType::J;
-      input.jData =
-          {
-              inst >> 26,
-              inst << 7 >> 7};
-      q.push(input);
-      //input.jData.printJ();
-    }
+      std::cout << std::setw(2) << std::right << pc << std::setw(2) << std::left << ":";
 
-    else
-    {
-      input.type = InstructionType::I;
-      input.iData =
-          {
-              inst >> 26,
-              inst << 6 >> 27,
-              inst << 11 >> 27,
-              inst << 16 >> 16};
-      q.push(input);
-      //input.iData.printI();
+      if (input.type == InstructionType::R)
+      {
+        q.back().rData.printR();
+      }
+      else if (input.type == InstructionType::S)
+      {
+        q.back().sData.printS();
+      }
+      else if (input.type == InstructionType::I)
+      {
+        q.back().iData.printI();
+      }
+      else
+      {
+        q.back().jData.printJ();
+      }
+      ++pc;
     }
-
-    std::cout << std::setw(2) << std::right << pc << std::setw(2) << std::left << ":";
-
-    if (input.type == InstructionType::R)
-    {
-      q.back().rData.printR();
-    }
-    else if (input.type == InstructionType::S)
-    {
-      q.back().sData.printS();
-    }
-    else if (input.type == InstructionType::I)
-    {
-      q.back().iData.printI();
-    }
-    else
-    {
-      q.back().jData.printJ();
-    }
-    ++pc;
   }
   return 0;
+}
+
+void I_Format::setI()
+{
+  regs[ reg.find(rt_)->first ] = rt_;
+  regs[ reg.find(rt_)->first ] = rt_;
+  regs[ reg.find(rt_)->first ] = rt_;
+}
+
+void I_Format::addiu()
+{
+  rt_ = rs_ + immed_;
+  setI();
 }
 
 void R_Format::printR()
@@ -215,7 +228,7 @@ void R_Format::printR()
   std::cout << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << std::endl;
 }
 
-void I_Format::printI()
+void I_Format::printI() // has to accomodate multiple printing formats
 {
   switch (opcode_)
   {
