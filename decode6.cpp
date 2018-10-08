@@ -134,220 +134,230 @@ std::vector<unsigned int> data;
 
 int main()
 {
-    Input input; // Create input object
-
-    while (fgets(line, MAXLINE, stdin))
+  Input input; // Create input object
+  
+  while (fgets(line, MAXLINE, stdin))
     {
-        if (sscanf(line, "%u%u", &gp, &word) == 2)
+      if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
-            regs[28] = gp;
-            data.resize(word);
+	  regs[28] = gp;
+	  data.resize(word);
         }
-        else // begin parse of o code
+      else // begin parse of o code
         {
-            sscanf(line, "%x", &inst);
-
-            if (inst >> 26 == 0)
+	  sscanf(line, "%x", &inst);
+	  
+	  if (inst >> 26 == 0)
             {
-                if (inst == 0x00000000c)
+	      if (inst == 0x00000000c)
                 {
-                    input.type = InstructionType::S;
-                    input.sData = {inst >> 26};
+		  input.type = InstructionType::S;
+		  input.sData = {inst >> 26};
                 }
-                else
+	      else
                 {
-                    input.type = InstructionType::R;
-                    input.rData =
-                        {
-                            inst >> 26,
-                            inst << 6 >> 27,
-                            inst << 11 >> 27,
-                            inst << 16 >> 27,
-                            inst << 21 >> 27,
-                            inst << 26 >> 26
-                        };
+		  input.type = InstructionType::R;
+		  input.rData =
+		    {
+		      inst >> 26,
+		      inst << 6 >> 27,
+		      inst << 11 >> 27,
+		      inst << 16 >> 27,
+		      inst << 21 >> 27,
+		      inst << 26 >> 26
+		    };
                 }
             }
-            else if (inst >> 26 == 2 || inst >> 26 == 3)
+	  else if (inst >> 26 == 2 || inst >> 26 == 3)
             {
-                input.type = InstructionType::J;
-                input.jData =
-                    {
-                        inst >> 26,
-                        inst << 7 >> 7};
+	      input.type = InstructionType::J;
+	      input.jData =
+		{
+		  inst >> 26,
+		  inst << 7 >> 7};
             }
-            else
+	  else
             {
-                input.type = InstructionType::I;
-                input.iData =
-                    {
-                        inst >> 26,
-                        inst << 6 >> 27,
-                        inst << 11 >> 27,
-                        inst << 16 >> 16
-                    };
+	      input.type = InstructionType::I;
+	      input.iData =
+		{
+		  inst >> 26,
+		  inst << 6 >> 27,
+		  inst << 11 >> 27,
+		  inst << 16 >> 16
+		};
             } // end parse of o code
-
+	  
             // begin function calls
             switch (inst >> 26)
-            {
-            case 0:
-            {
-                if (input.rData.funct_ == 33)
+	      {
+	      case 0:
+		{
+		  if (input.rData.funct_ == 33)
                     input.rData.add();
-                else if (input.rData.funct_ == 42)
+		  else if (input.rData.funct_ == 42)
                     input.rData.slt(input.rData.rd_, input.rData.rs_, input.rData.rt_);
-                else
+		  else
                     break;
-            }
-            case 12:
-                sCall(regs[reg.find("$v0")->first]);
+		}
+	      case 12:
+		{
+		  sCall(regs[reg.find("$v0")->first]);
+		  break;
+		}
+	      case 9:
+		{
+		  input.iData.addiu();
+		  break;
+		}
+	      case 2:
+		{}
+	      default:
                 break;
-            case 9:
-                input.iData.addiu();
-                break;
-            case 2:
-
-            default:
-                break;
-            }
-        printI(input);
-        ++pc;
+	      }
+	    printI(input);
+	    ++pc;
         }
     }
-    return 0;
+  return 0;
 }
 
 void sCall(unsigned int v0)
 {
-    if (v0 == 1)
-        exit (EXIT_SUCCESS);
-    else if 
-
+  if (v0 == 10)
+    exit (EXIT_SUCCESS);
+  else if (v0 == 5)
+    {
+      std::cin >> data[0];
+    }
+  else
+    {
+      std::cout << v0 << "\n";
+    }
 }
-   
- void R_Format::slt(unsigned int rd_, unsigned int rs_, unsigned int rt_)
- {
-    if (regs[reg.find(rs_)->first] < regs[reg.find(rt_)->first])
-        regs[reg.find(rd_)->first] = 1;
-    else
-        regs[reg.find(rd_)->first] = 0;
+
+void R_Format::slt(unsigned int rd_, unsigned int rs_, unsigned int rt_)
+{
+  if (regs[reg.find(rs_)->first] < regs[reg.find(rt_)->first])
+    regs[reg.find(rd_)->first] = 1;
+  else
+    regs[reg.find(rd_)->first] = 0;
 }
 
 void R_Format::add()
 {
-    regs[reg.find(rd_)->first] = regs[reg.find(rs_)->first] + regs[reg.find(rt_)->first];
+  regs[reg.find(rd_)->first] = regs[reg.find(rs_)->first] + regs[reg.find(rt_)->first];
 }
 
 void I_Format::addiu()
 {
-    regs[reg.find(rt_)->first] = regs[reg.find(rs_)->first + immed_;
+  regs[reg.find(rt_)->first] = regs[reg.find(rs_)->first] + immed_;
 }
 
 void R_Format::printR()
 {
-    std::cout << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << std::endl;
+  std::cout << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << std::endl;
 }
 
 void I_Format::printI()
 {
-    switch (opcode_)
+  switch (opcode_)
     {
-        case 35:
-        case 43:
-        {
-            std::cout
-                << std::setw(10)
-                << std::left
-                << funct[opcode_]
-                << reg[rt_] << ","
-                << immed_
-                << "(" << reg[rs_] << ")" << std::endl;
-            break;
-        }
-        case 4:
-        {
-            std::cout
-                << std::setw(10)
-                << std::left
-                << funct[opcode_]
-                << reg[rs_] << ","
-                << reg[rt_] << ","
-                << immed_ << std::endl;
-            break;
-        }
-        default:
-        {
-            std::cout
-                << std::setw(10)
-                << std::left
-                << funct[opcode_]
-                << reg[rt_] << ","
-                << reg[rs_] << ","
-                << immed_ << std::endl;
-            break;
-        }   
+    case 35:
+    case 43:
+      {
+	std::cout
+	  << std::setw(10)
+	  << std::left
+	  << funct[opcode_]
+	  << reg[rt_] << ","
+	  << immed_
+	  << "(" << reg[rs_] << ")" << std::endl;
+	break;
+      }
+    case 4:
+      {
+	std::cout
+	  << std::setw(10)
+	  << std::left
+	  << funct[opcode_]
+	  << reg[rs_] << ","
+	  << reg[rt_] << ","
+	  << immed_ << std::endl;
+	break;
+      }
+    default:
+      {
+	std::cout
+	  << std::setw(10)
+	  << std::left
+	  << funct[opcode_]
+	  << reg[rt_] << ","
+	  << reg[rs_] << ","
+	  << immed_ << std::endl;
+	break;
+      }   
     }
 }
 
-    void J_Format::printJ()
+void J_Format::printJ()
+{
+  std::cout << std::setw(10) << std::left << funct[opcode_] << addr_ << std::endl;
+}
+
+void System_Call::printS()
+{
+  std::cout << "syscall" << std::endl;
+}
+
+void printI(Input input)
+{
+  std::cout
+    << "PC:" << std::right << std::setw(3) << pc << std::endl
+    << "inst: ";
+  
+  switch (input.type)
     {
-        std::cout << std::setw(10) << std::left << funct[opcode_] << addr_ << std::endl;
-    }
-
-    void System_Call::printS()
+    case InstructionType::R:
+      {
+	input.rData.printR();
+	break;
+      }
+    case InstructionType::S:
+      {
+	input.sData.printS();
+	break;
+      }
+    case InstructionType::I:
+      {
+	input.iData.printI();
+	break;
+      }
+    default:
+      {
+	input.jData.printJ();
+	break;
+      }
+    } // end of switch
+  
+  std::cout << std::endl
+	    << "regs:" << std::endl;
+  
+  for (int i = 0, j = 1; i < 34; ++i, ++j)
     {
-        std::cout << "syscall" << std::endl;
+      std::cout
+	<< std::setw(8) << std::right << reg.find(i)->second
+	<< " ="
+	<< std::setw(6) << std::right << regs[i];
+      if (j % 4 == 0)
+	std::cout << std::endl;
     }
-
-    void printI(Input input)
+  std::cout << std::endl
+	    << std::endl;
+  
+  for (int i = 0; i < data.size(); ++i)
     {
-        std::cout
-            << "PC:" << std::right << std::setw(3) << pc << std::endl
-            << "inst: ";
-
-        switch (input.type)
-        {
-        case InstructionType::R:
-        {
-            input.rData.printR();
-            break;
-        }
-        case InstructionType::S:
-        {
-            input.sData.printS();
-            break;
-        }
-        case InstructionType::I:
-        {
-            input.iData.printI();
-            break;
-        }
-        default:
-        {
-            input.jData.printJ();
-            break;
-        }
-        } // end of switch
-
-        std::cout << std::endl
-                  << "regs:" << std::endl;
-
-        for (int i = 0, j = 1; i < 34; ++i, ++j)
-        {
-            std::cout
-                << std::setw(8) << std::right << reg.find(i)->second
-                << " ="
-                << std::setw(6) << std::right << regs[i];
-            if (j % 4 == 0)
-                std::cout << std::endl;
-        }
-        std::cout << std::endl
-                  << std::endl;
-
-        for (int i = 0; i < data.size(); ++i)
-        {
-            printf("data memory:\n   data[%3d] =%6d\n", i, data[i]);
-        }
-        printf("\n\n");
+      printf("data memory:\n   data[%3d] =%6d\n", i, data[i]);
     }
+  printf("\n\n");
+}
