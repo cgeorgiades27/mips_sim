@@ -10,6 +10,7 @@
 #include <map>
 #include <iomanip>
 #include <queue>
+#include <tuple>
 
 #define MAXLINE 80
 
@@ -137,7 +138,6 @@ int main()
 
     while (fgets(line, MAXLINE, stdin))
     {
-
         if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
             regs[28] = gp;
@@ -153,9 +153,7 @@ int main()
                 {
                     input.type = InstructionType::S;
                     input.sData = {inst >> 26};
-                    q.push(input);
                 }
-
                 else
                 {
                     input.type = InstructionType::R;
@@ -166,11 +164,10 @@ int main()
                             inst << 11 >> 27,
                             inst << 16 >> 27,
                             inst << 21 >> 27,
-                            inst << 26 >> 26};
+                            inst << 26 >> 26
+                        };
                 }
-                q.push(input);
             }
-
             else if (inst >> 26 == 2 || inst >> 26 == 3)
             {
                 input.type = InstructionType::J;
@@ -178,9 +175,7 @@ int main()
                     {
                         inst >> 26,
                         inst << 7 >> 7};
-                q.push(input);
             }
-
             else
             {
                 input.type = InstructionType::I;
@@ -190,78 +185,73 @@ int main()
                         inst << 6 >> 27,
                         inst << 11 >> 27,
                         inst << 16 >> 16};
-                q.push(input);
             } // end parse of o code
 
-
+            // begin function calls
             switch (inst >> 26)
             {
             case 0:
             {
-                switch (input.rData.funct_)
-                {
-                case 33:
-                {
+                if (input.rData.funct_ == 33)
                     input.rData.add();
-                    break;
-                }
-                case 42:
-                {
+                else if (input.rData.funct_ == 42)
                     input.rData.slt(input.rData.rd_, input.rData.rs_, input.rData.rt_);
+                else
                     break;
-                }
-            }
-            break;
             }
             case 12:
-            {
                 sCall(regs[reg.find("$v0")->first]);
                 break;
-            }
+            case 9:
+                input.iData.addiu();
+                break;
+            case 2:
+
             default:
-
+                break;
             }
+        printI(input);
+        ++pc;
         }
-            }
-                printI(input);
-                ++pc;
-            }
-        }
-        return 0;
     }
-
+    return 0;
+}
 
 void sCall(unsigned int v0)
 {
+    if (v0 == 1)
+        exit (EXIT_SUCCESS);
+    else if 
 
 }
-    void R_Format::slt(unsigned int rd_, unsigned int rs_, unsigned int rt_)
-    {
-        if (regs[reg.find(rs_)->first] < regs[reg.find(rt_)->first])
-            regs[reg.find(rd_)->first] = 1;
-        else
-            regs[reg.find(rd_)->first] = 0;
-    }
+   
+ void R_Format::slt(unsigned int rd_, unsigned int rs_, unsigned int rt_)
+ {
+    if (regs[reg.find(rs_)->first] < regs[reg.find(rt_)->first])
+        regs[reg.find(rd_)->first] = 1;
+    else
+        regs[reg.find(rd_)->first] = 0;
+}
 
-    void R_Format::add()
-    {
-        regs[reg.find(rd_)->first] = regs[reg.find(rs_)->first] + regs[reg.find(rt_)->first];
-    }
+void R_Format::add()
+{
+    regs[reg.find(rd_)->first] = regs[reg.find(rs_)->first] + regs[reg.find(rt_)->first];
+}
 
-    void I_Format::addiu()
-    {
-        regs[reg.find(rt_)->first] = rs_ + immed_;
-    }
+void I_Format::addiu()
+{
+    regs[reg.find(rt_)->first] = regs[reg.find(rs_)->first + immed_;
+}
 
-    void R_Format::printR()
-    {
-        std::cout << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << std::endl;
-    }
+void R_Format::printR()
+{
+    std::cout << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << std::endl;
+}
 
-    void I_Format::printI()
+void I_Format::printI()
+{
+    switch (opcode_)
     {
-        switch (opcode_)
-        {
         case 35:
         case 43:
         {
@@ -295,9 +285,9 @@ void sCall(unsigned int v0)
                 << reg[rs_] << ","
                 << immed_ << std::endl;
             break;
-        }
-        }
+        }   
     }
+}
 
     void J_Format::printJ()
     {
