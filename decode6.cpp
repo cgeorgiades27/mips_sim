@@ -184,7 +184,8 @@ int main()
                         inst >> 26,
                         inst << 6 >> 27,
                         inst << 11 >> 27,
-                        inst << 16 >> 16};
+                        inst << 16 >> 16
+                    };
             } // end parse of o code
 
             // begin function calls
@@ -348,6 +349,5 @@ void I_Format::printI()
         {
             printf("data memory:\n   data[%3d] =%6d\n", i, data[i]);
         }
-
         printf("\n\n");
     }
