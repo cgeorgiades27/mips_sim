@@ -219,8 +219,14 @@ int main()
             default:
                 break;
             }
-            //printAll(q.back());
             ++pc;
+        }
+
+        std::queue<Input> q2(q);
+        while (!q2.empty())
+        {
+            printInstructions(q2.back());
+            q2.pop();
         }
 
         while (!q.empty())
@@ -380,4 +386,35 @@ void printAll(Input input)
         printf("data memory:\n   data[%3d] =%6d\n", i, data[i]);
     }
     printf("\n\n");
+}
+
+void printInstructions(Input input)
+{
+    std::cout
+        << "insts:" << std::endl
+        << std::setw(2) << std::right << pc << std::setw(2) << std::left << ":" << std::endl;
+
+    switch (input.type)
+    {
+    case InstructionType::R:
+    {
+        input.rData.printR();
+        break;
+    }
+    case InstructionType::S:
+    {
+        input.sData.printS();
+        break;
+    }
+    case InstructionType::I:
+    {
+        input.iData.printI();
+        break;
+    }
+    default:
+    {
+        input.jData.printJ();
+        break;
+    }
+    } // end of switch
 }
