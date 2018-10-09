@@ -82,6 +82,7 @@ struct Input
 };
 
 void printAll(Input); // print report
+void printInstructions(Input); // print instruction list
 
 std::map<unsigned int, std::string> reg{
     {0, "$zero"},
@@ -128,6 +129,7 @@ std::map<unsigned int, std::string> funct{
     {42, "slt"},
     {43, "sw"},
     {12, "syscall"}};
+
 std::queue<Input> q;
 std::vector<unsigned int> regs(34, 0);
 std::vector<unsigned int> data;
@@ -223,17 +225,21 @@ int main()
         }
 
         std::queue<Input> q2(q);
-        while (!q2.empty())
+
+	std::cout << "isnts:" << std::endl;
+	
+	while (!q2.empty())
         {
-            printInstructions(q2.back());
+            printInstructions(q2.front());
             q2.pop();
         }
-
+	/*
         while (!q.empty())
         {
             printAll(q.front());
             q.pop();
         }
+	*/
     }
     return 0;
 }
@@ -391,7 +397,6 @@ void printAll(Input input)
 void printInstructions(Input input)
 {
     std::cout
-        << "insts:" << std::endl
         << std::setw(2) << std::right << pc << std::setw(2) << std::left << ":" << std::endl;
 
     switch (input.type)
@@ -416,5 +421,5 @@ void printInstructions(Input input)
         input.jData.printJ();
         break;
     }
-    } // end of switch
+    }
 }
