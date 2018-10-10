@@ -37,8 +37,7 @@ struct R_Format
     unsigned int rd_;
     unsigned int shamt_;
     unsigned int funct_;
-    void printR();
-    void setR();
+    void printR(std::ofstream logFile);
     void add();
     void slt(unsigned int rd_, unsigned int rs_, unsigned int rt_);
 };
@@ -49,7 +48,7 @@ struct I_Format
     unsigned int rs_;
     unsigned int rt_;
     unsigned int immed_;
-    void printI();
+    void printI(std::ofstream logFile);
     void addiu();
     void lw(unsigned int rt_, unsigned int immed_, std::vector<unsigned int> a);
     void sw(unsigned int rt_, unsigned int immed_, std::vector<unsigned int> a);
@@ -59,14 +58,14 @@ struct J_Format
 {
     unsigned int opcode_;
     unsigned int addr_;
-    void printJ();
+    void printJ(std::ofstream logFile);
 };
 
 struct System_Call
 {
     unsigned int opcode_;
     unsigned int funct_;
-    void printS();
+    void printS(std::ofstream logFile);
     void sCall(unsigned int v0);
 };
 
@@ -81,8 +80,8 @@ struct Input
     };
 };
 
-void printAll(Input, int counter);          // print report
-void printInstructions(Input, int counter); // print instruction list
+void printAll(Input, std::ofstream logFile, int counter);          // print report
+void printInstructions(Input, std::ofstream logFile, int counter); // print instruction list
 
 std::map<unsigned int, std::string> reg{
     {0, "$zero"},
@@ -224,7 +223,6 @@ int main()
             ++pc;
         }
     }
-
     std::ofstream logFile;
     logFile.open("log.txt");
 
@@ -234,7 +232,7 @@ int main()
     std::cout << "isnts:" << std::endl;
     while (!q2.empty())
     {
-        printInstructions(q2.front(), i);
+        printInstructions(q2.front(), logFile, i);
         q2.pop();
         ++i;
     }
@@ -243,7 +241,7 @@ int main()
 
     while (!q.empty())
     {
-        printAll(q.front(), j);
+        printAll(q.front(), logFile, j);
         q.pop();
         ++j;
     }
@@ -301,19 +299,19 @@ void I_Format::addiu()
     regs[reg.find(rt_)->first] = regs[reg.find(rs_)->first] + immed_;
 }
 
-void R_Format::printR()
+void R_Format::printR(std::ofstream logFile)
 {
-    std::cout << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << std::endl;
+    logFile << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << std::endl;
 }
 
-void I_Format::printI()
+void I_Format::printI(std::ofstream logFile)
 {
     switch (opcode_)
     {
     case 35:
     case 43:
     {
-        std::cout
+        logFile
             << std::setw(10)
             << std::left
             << funct[opcode_]
@@ -324,7 +322,7 @@ void I_Format::printI()
     }
     case 4:
     {
-        std::cout
+        logFile
             << std::setw(10)
             << std::left
             << funct[opcode_]
@@ -335,7 +333,7 @@ void I_Format::printI()
     }
     default:
     {
-        std::cout
+        logFile
             << std::setw(10)
             << std::left
             << funct[opcode_]
@@ -347,14 +345,14 @@ void I_Format::printI()
     }
 }
 
-void J_Format::printJ()
+void J_Format::printJ(std::ofstream logFile)
 {
-    std::cout << std::setw(10) << std::left << funct[opcode_] << addr_ << std::endl;
+    logFile << std::setw(10) << std::left << funct[opcode_] << addr_ << std::endl;
 }
 
-void System_Call::printS()
+void System_Call::printS(std::ofstream logFile)
 {
-    std::cout << "syscall" << std::endl;
+    logFile << "syscall" << std::endl;
 }
 
 void printAll(Input input, std::ofstream logFile, int counter)
@@ -367,73 +365,75 @@ void printAll(Input input, std::ofstream logFile, int counter)
     {
     case InstructionType::R:
     {
-        input.rData.printR();
+        input.rData.printR(logFile);
         break;
     }
     case InstructionType::S:
     {
-        input.sData.printS();
+        input.sData.printS(logFile);
         break;
     }
     case InstructionType::I:
     {
-        input.iData.printI();
+        input.iData.printI(logFile);
         break;
     }
     default:
     {
-        input.jData.printJ();
+        input.jData.printJ(logFile);
         break;
     }
     } // end of switch
 
-    std::logFile << std::endl
-              << "regs:" << std::endl;
+    logFile << std::endl
+            << "regs:" << std::endl;
 
     for (int i = 0, j = 1; i < 34; ++i, ++j)
     {
-        std::cout
+        logFile
             << std::setw(8) << std::right << reg.find(i)->second
             << " ="
             << std::setw(6) << std::right << regs[i];
         if (j % 4 == 0)
-            std::cout << std::endl;
+            logFile << std::endl;
     }
-    std::cout << std::endl
-              << std::endl;
+    logFile << std::endl
+            << std::endl;
 
     for (int i = 0; i < data.size(); ++i)
     {
-        printf("data memory:\n   data[%3d] =%6d\n", i, data[i]);
+        logFile << "data memory:"
+                << "\n"
+                << "  data[" << std::setw(3) << i << "] =" << std::setw(6) << data[i];
     }
-    printf("\n\n");
+    logFile << "\n\n";
 }
 
-void printInstructions(Input input, int counter)
+void printInstructions(Input input, std::ofstream logFile, int counter)
 {
-    std::cout
+    logFile
         << std::setw(2) << std::right << counter << std::setw(2) << std::left << ":";
 
     switch (input.type)
     {
     case InstructionType::R:
     {
-        input.rData.printR();
+        input.rData.printR(logFile);
         break;
     }
     case InstructionType::S:
     {
-        input.sData.printS();
+        input.sData.printS(logFile);
         break;
     }
     case InstructionType::I:
     {
-        input.iData.printI();
+        input.iData.printI(logFile);
         break;
     }
     default:
     {
-        input.jData.printJ();
+        input.jData.printJ(logFile);
         break;
     }
     }
