@@ -143,7 +143,7 @@ int main()
     {
         if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
-            regs[28] = gp;
+            &regs[28] = &gp;
             data.resize(word);
         }
         else // begin parse of o code
@@ -198,57 +198,57 @@ int main()
             {
             case 0:
             {
-                if (input.rData.funct_ == 33)
-                    input.rData.add();
-                else if (input.rData.funct_ == 42)
-                    input.rData.slt(input.rData.rd_, input.rData.rs_, input.rData.rt_);
-                else
-                    break;
+	      if (input.rData.funct_ == 33)
+		input.rData.add();
+	      else if (input.rData.funct_ == 42)
+		input.rData.slt(input.rData.rd_, input.rData.rs_, input.rData.rt_);
+	      else
+		break;
             }
             case 12:
-            {
+	      {
                 input.sData.sCall(regs[2]); // hard coded to $v0
                 break;
-            }
+	      }
             case 9:
-            {
+	      {
                 input.iData.addiu();
                 break;
-            }
+	      }
             case 2:
-            {
-            }
+	      {
+	      }
             default:
-                break;
+	      break;
             }
             ++pc;
         }
     }
-
-    std::ofstream logFile;
-    logFile.open("log.txt");
-
+    
+    //std::ofstream logFile;
+    //logFile.open("log.txt");
+    
     std::queue<Input> q2(q);
     int i = 0;
-
+    
     std::cout << "isnts:" << std::endl;
     while (!q2.empty())
-    {
+      {
         printInstructions(q2.front(), i);
         q2.pop();
         ++i;
-    }
-
+      }
+    
     int j = 0;
-
+    
     while (!q.empty())
-    {
-        printAll(q.front(), j);
-        q.pop();
-        ++j;
-    }
-
-    logFile.close();
+      {
+	printAll(q.front(), j);
+	q.pop();
+	++j;
+      }
+    
+    //logFile.close();
     return 0;
 }
 
@@ -357,11 +357,11 @@ void System_Call::printS()
     std::cout << "syscall" << std::endl;
 }
 
-void printAll(Input input, std::ofstream logFile, int counter)
+void printAll(Input input, int counter)
 {
-    logFile
-        << "PC:" << std::right << std::setw(3) << counter << std::endl
-        << "inst: ";
+  std::cout
+    << "PC:" << std::right << std::setw(3) << counter << std::endl
+    << "inst: ";
 
     switch (input.type)
     {
@@ -387,7 +387,7 @@ void printAll(Input input, std::ofstream logFile, int counter)
     }
     } // end of switch
 
-    std::logFile << std::endl
+    std::cout << std::endl
               << "regs:" << std::endl;
 
     for (int i = 0, j = 1; i < 34; ++i, ++j)
