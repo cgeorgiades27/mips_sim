@@ -167,11 +167,12 @@ int main(int argc, char **argv)
             iList.push_back(inst);
         }
     }
-
+/*
     // parse
     for (int pc = 0; pc < iList.size(); ++pc)
     {
         inst = iList[pc];
+        regs[gp] = iList[gp];
 
         if (inst >> 26 == 0)
         {
@@ -258,6 +259,7 @@ int main(int argc, char **argv)
     }
 
     std::cout << "\n";
+    std::cout << "data:\n" << std::setw(4) << std::right << gp << ":" << iList[gp] << std::endl; 
 
     int j = 0;
 
@@ -267,6 +269,9 @@ int main(int argc, char **argv)
         q.pop();
         ++j;
     }
+*/
+    for (int i = 0; i < iList.size(); ++i)
+        std::cout << std::hex << iList[i] << std::endl; 
 
     return 0;
 }
