@@ -1,3 +1,4 @@
+
 /******************************
  *
  *  Chris Georgiades
@@ -15,11 +16,6 @@
 #define MAXLINE 80
 
 // global variables
-char line[MAXLINE];
-unsigned int inst;
-unsigned int word;
-unsigned int gp;
-int pc = 0;
 
 enum class InstructionType
 {
@@ -130,16 +126,35 @@ std::map<unsigned int, std::string> funct{
     {43, "sw"},
     {12, "syscall"}};
 
+unsigned int inst;
+unsigned int word;
+unsigned int gp;
+int pc = 0;
+
 std::queue<Input> q;
 std::vector<unsigned int> regs(34, 0);
-std::vector<unsigned int> data;
-std::vector<Input> iList;
+std::vector<unsigned int> data(32768);
+std::vector<unsigned int> iList;
+Input input; // Create input object
+char line[MAXLINE];
 
-int main()
+int main(int argc, char **argv)
 {
-    Input input; // Create input object
+    if (argc == 1)
+    {
+        std::cerr << "Usage: " << argv[0] << " filename\n";
+        exit(EXIT_FAILURE);
+    }
 
-    while (fgets(line, MAXLINE, stdin) || regs[2] != 10)
+    std::ifstream fin;
+    fin.open(argv[1]);
+
+    if (!fin.is_open())
+    {
+        std::cerr << "Unable to open file\n";
+    }
+
+    while (fin.getline(line, MAXLINE))
     {
         if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
@@ -149,95 +164,100 @@ int main()
         else // begin parse of o code
         {
             sscanf(line, "%x", &inst);
+            iList.push_back(inst);
+        }
+    }
 
-            if (inst >> 26 == 0)
+    // parse
+    for (int pc = 0; pc < iList.size(); ++pc)
+    {
+        inst = iList[pc];
+
+        if (inst >> 26 == 0)
+        {
+            if (inst == 0x00000000c)
             {
-                if (inst == 0x00000000c)
-                {
-                    input.type = InstructionType::S;
-                    input.sData = {inst >> 26};
-                    q.push(input);
-                }
-                else
-                {
-                    input.type = InstructionType::R;
-                    input.rData =
-                        {
-                            inst >> 26,
-                            inst << 6 >> 27,
-                            inst << 11 >> 27,
-                            inst << 16 >> 27,
-                            inst << 21 >> 27,
-                            inst << 26 >> 26};
-                    q.push(input);
-                }
-            }
-            else if (inst >> 26 == 2 || inst >> 26 == 3)
-            {
-                input.type = InstructionType::J;
-                input.jData =
-                    {
-                        inst >> 26,
-                        inst << 7 >> 7};
+                input.type = InstructionType::S;
+                input.sData = {inst >> 26};
                 q.push(input);
             }
             else
             {
-                input.type = InstructionType::I;
-                input.iData =
+                input.type = InstructionType::R;
+                input.rData =
                     {
                         inst >> 26,
                         inst << 6 >> 27,
                         inst << 11 >> 27,
-                        inst << 16 >> 16};
+                        inst << 16 >> 27,
+                        inst << 21 >> 27,
+                        inst << 26 >> 26};
                 q.push(input);
-            } // end parse of o code
+            }
+        }
+        else if (inst >> 26 == 2 || inst >> 26 == 3)
+        {
+            input.type = InstructionType::J;
+            input.jData =
+                {
+                    inst >> 26,
+                    inst << 7 >> 7};
+            q.push(input);
+        }
+        else
+        {
+            input.type = InstructionType::I;
+            input.iData =
+                {
+                    inst >> 26,
+                    inst << 6 >> 27,
+                    inst << 11 >> 27,
+                    inst << 16 >> 16};
+            q.push(input);
+        } // end parse of o code
 
-            // begin function calls
-            switch (inst >> 26)
-            {
-            case 0:
-            {
-                if (input.rData.funct_ == 33)
-                    input.rData.add();
-                else if (input.rData.funct_ == 42)
-                    input.rData.slt(input.rData.rd_, input.rData.rs_, input.rData.rt_);
-                else
-                    break;
-            }
-            case 12:
-            {
-                input.sData.sCall(regs[2], input.sData.immed_); // hard coded to $v0
+        // begin function calls
+        switch (inst >> 26)
+        {
+        case 0:
+        {
+            if (input.rData.funct_ == 33)
+                input.rData.add();
+            else if (input.rData.funct_ == 42)
+                input.rData.slt(input.rData.rd_, input.rData.rs_, input.rData.rt_);
+            else
                 break;
-            }
-            case 9:
-            {
-                input.iData.addiu();
-                break;
-            }
-            case 2:
-            {
-            }
-            default:
-                break;
-            }
-            ++pc;
+        }
+        case 12:
+        {
+            input.sData.sCall(regs[2]); // hard coded to $v0
+            break;
+        }
+        case 9:
+        {
+            input.iData.addiu();
+            break;
+        }
+        case 2:
+        {
+        }
+        default:
+            break;
         }
     }
-
-    //std::ofstream logFile;
-    //logFile.open("log.txt");
 
     std::queue<Input> q2(q);
     int i = 0;
 
     std::cout << "isnts:" << std::endl;
-    while (!q2.empty())
+    while (i < q2.size())
     {
         printInstructions(q2.front(), i);
         q2.pop();
         ++i;
     }
+
+    std::cout << "\n";
 
     int j = 0;
 
@@ -248,7 +268,6 @@ int main()
         ++j;
     }
 
-    //logFile.close();
     return 0;
 }
 
