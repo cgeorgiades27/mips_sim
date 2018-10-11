@@ -128,7 +128,7 @@ std::map<unsigned int, std::string> funct{
 
 unsigned int inst;
 unsigned int word;
-unsigned int gp;
+unsigned int* gp;
 int pc = 0;
 
 std::queue<Input> q;
@@ -158,8 +158,8 @@ int main(int argc, char **argv)
     {
         if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
-            regs[28] = gp;
-            data.resize(word);
+	  //regs[28] = gp;
+	  data.resize(word);
         }
         else // begin parse of o code
         {
@@ -271,7 +271,7 @@ int main(int argc, char **argv)
     }
 */
     for (int i = 0; i < iList.size(); ++i)
-        std::cout << std::hex << iList[i] << std::endl; 
+      std::cout << std::hex << std::setw(8) << std::setfill('0') << iList[i] << std::endl; 
 
     return 0;
 }
