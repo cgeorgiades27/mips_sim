@@ -154,18 +154,39 @@ int main(int argc, char **argv)
         std::cerr << "Unable to open file\n";
     }
 
+    int counter = 0;
+    
     while (fin.getline(line, MAXLINE))
     {
         if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
-	  //regs[28] = gp;
+	  regs[28] = gp;
 	  data.resize(word);
+	  
         }
         else // begin parse of o code
-        {
-            sscanf(line, "%x", &inst);
-            iList.push_back(inst);
+        {  
+	  if (counter >= gp)
+	    {
+	      for (int i = 0; i < data.size(); ++i)
+		{
+		  data[i] = iList[*gp];
+		  ++iList[gp];
+		}
+
+	    }
+	  else
+	    {
+	      sscanf(line, "%x", &inst);
+	      iList.push_back(inst);
+	    }
         }
+
+	gp = &data;
+	
+	/* create array for static data
+	*/
+	    ++counter;
     }
 /*
     // parse
