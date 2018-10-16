@@ -47,8 +47,8 @@ struct I_Format
     unsigned int immed_;
     void printI();
     void addiu();
-    void lw(unsigned int rt_, unsigned int immed_, std::vector<unsigned int> a);
-    void sw(unsigned int rt_, unsigned int immed_, std::vector<unsigned int> a);
+    void lw(unsigned int rt_, unsigned int immed_, unsigned int* gp);
+    void sw(unsigned int rt_, unsigned int immed_, unsigned int* gp);
 };
 
 struct J_Format
@@ -128,72 +128,55 @@ std::map<unsigned int, std::string> funct{
 
 unsigned int inst;
 unsigned int word;
-unsigned int* gp;
+unsigned int *gp;
 int pc = 0;
 
 std::queue<Input> q;
 std::vector<unsigned int> regs(34, 0);
-std::vector<unsigned int> data(32768);
 std::vector<unsigned int> iList;
 Input input; // Create input object
 char line[MAXLINE];
 
 int main(int argc, char **argv)
 {
-    if (argc == 1)
+    if (argc == 1) // test for argument usage
     {
-        std::cerr << "Usage: " << argv[0] << " filename\n";
+        std::cerr << "usage: " << argv[0] << " <name>.obj\n";
         exit(EXIT_FAILURE);
     }
 
     std::ifstream fin;
     fin.open(argv[1]);
 
-    if (!fin.is_open())
+    if (!fin.is_open()) // test to see if file exists
     {
-        std::cerr << "Unable to open file\n";
+        std::cerr << "file " << argv[1] << " cannot be opened\n";
     }
 
     int counter = 0;
-    
+
     while (fin.getline(line, MAXLINE))
     {
         if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
-	  regs[28] = gp;
-	  data.resize(word);
-	  
+            unsigned int data[word];
+            gp = data;
+            regs[reg.find(*gp)->first] = *gp; // set the value of the gp
+            std::cout
+                << "gp: " << gp << "\n"
+                << "data[0]: " << data << "\n";
         }
-        else // begin parse of o code
-        {  
-	  if (counter >= gp)
-	    {
-	      for (int i = 0; i < data.size(); ++i)
-		{
-		  data[i] = iList[*gp];
-		  ++iList[gp];
-		}
-
-	    }
-	  else
-	    {
-	      sscanf(line, "%x", &inst);
-	      iList.push_back(inst);
-	    }
+        else // begin parse of object code
+        {
+            sscanf(line, "%x", &inst);
+            iList.push_back(inst);
         }
-
-	gp = &data;
-	
-	/* create array for static data
-	*/
-	    ++counter;
     }
-/*
+    ++counter;
     // parse
-    for (int pc = 0; pc < iList.size(); ++pc)
+    for (int pc = 0; pc < iList.size() - 1; ++pc)
     {
         inst = iList[pc];
-        regs[gp] = iList[gp];
 
         if (inst >> 26 == 0)
         {
@@ -236,23 +219,19 @@ int main(int argc, char **argv)
                     inst << 11 >> 27,
                     inst << 16 >> 16};
             q.push(input);
-        } // end parse of o code
+        } // end parse of object code
 
         // begin function calls
         switch (inst >> 26)
         {
-        case 0:
+        case 0: // R_Format and Syscalls
         {
             if (input.rData.funct_ == 33)
                 input.rData.add();
             else if (input.rData.funct_ == 42)
                 input.rData.slt(input.rData.rd_, input.rData.rs_, input.rData.rt_);
             else
-                break;
-        }
-        case 12:
-        {
-            input.sData.sCall(regs[2]); // hard coded to $v0
+                input.sData.sCall(regs[2]); // hard coded to $v0
             break;
         }
         case 9:
@@ -262,6 +241,15 @@ int main(int argc, char **argv)
         }
         case 2:
         {
+            break;
+        }
+        case 4:
+        {
+            break;
+        }
+        case 35:
+        {
+
         }
         default:
             break;
@@ -280,7 +268,8 @@ int main(int argc, char **argv)
     }
 
     std::cout << "\n";
-    std::cout << "data:\n" << std::setw(4) << std::right << gp << ":" << iList[gp] << std::endl; 
+    std::cout << "data:\n"
+              << std::setw(4) << std::right << gp << ":" << iList[*gp] << std::endl;
 
     int j = 0;
 
@@ -290,9 +279,10 @@ int main(int argc, char **argv)
         q.pop();
         ++j;
     }
-*/
+
     for (int i = 0; i < iList.size(); ++i)
-      std::cout << std::hex << std::setw(8) << std::setfill('0') << iList[i] << std::endl; 
+        std::cout
+            << std::hex << std::setw(8) << std::setfill('0') << iList[i] << std::endl;
 
     return 0;
 }
@@ -301,16 +291,17 @@ void System_Call::sCall(unsigned int v0)
 {
     switch (v0)
     {
-    case 10:
+    case 10: // exit
     {
+        exit(EXIT_SUCCESS);
         break;
     }
-    case 5:
+    case 5: // read input
     {
-        std::cin >> v0;
+        scanf("%u", &v0);
         break;
     }
-    default:
+    default: // print
     {
         std::cout << v0 << "\n";
         break;
@@ -318,14 +309,14 @@ void System_Call::sCall(unsigned int v0)
     }
 }
 
-void I_Format::lw(unsigned int rt_, unsigned int immed_, std::vector<unsigned int> a)
+void I_Format::lw(unsigned int rt_, unsigned int immed_, unsigned int* gp)
 {
-    regs[reg.find(rt_)->first] = a[immed_];
+    regs[reg.find(rt_)->first] = *(gp + immed_);
 }
 
-void I_Format::sw(unsigned int rt_, unsigned int immed_, std::vector<unsigned int> a)
+void I_Format::sw(unsigned int rt_, unsigned int immed_, unsigned int* gp)
 {
-    a[immed_] = regs[reg.find(rt_)->first];
+    *(gp + immed_) = regs[reg.find(rt_)->first];
 }
 
 void R_Format::slt(unsigned int rd_, unsigned int rs_, unsigned int rt_)
@@ -447,10 +438,6 @@ void printAll(Input input, int counter)
     std::cout << std::endl
               << std::endl;
 
-    for (int i = 0; i < data.size(); ++i)
-    {
-        printf("data memory:\n   data[%3d] =%6d\n", i, data[i]);
-    }
     printf("\n\n");
 }
 
