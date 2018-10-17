@@ -132,10 +132,12 @@ unsigned int *gp;
 int pc = 0;
 
 std::queue<Input> q;
+std::vector<unsigned int> data (32740);
 std::vector<unsigned int> regs(34, 0);
 std::vector<unsigned int> iList;
 Input input; // Create input object
 char line[MAXLINE];
+
 
 int main(int argc, char **argv)
 {
@@ -159,18 +161,18 @@ int main(int argc, char **argv)
     {
         if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
-            unsigned int data[word];
-            gp = data;
-            regs[reg.find(*gp)->first] = *gp; // set the value of the gp
-            std::cout
-                << "gp: " << gp << "\n"
-                << "data[0]: " << data << "\n";
+	  unsigned int data[word];
+	  gp = data;
+	  regs[reg.find(*gp)->first] = *gp; // set the value of the gp
+	  std::cout
+	    << "gp: " << gp << "\n"
+	    << "data[0]: " << data << "\n";
         }
         else // begin parse of object code
-        {
+	  {
             sscanf(line, "%x", &inst);
             iList.push_back(inst);
-        }
+	  }
     }
     ++counter;
     // parse
@@ -221,6 +223,7 @@ int main(int argc, char **argv)
             q.push(input);
         } // end parse of object code
 
+	/*
         // begin function calls
         switch (inst >> 26)
         {
@@ -253,14 +256,14 @@ int main(int argc, char **argv)
         }
         default:
             break;
-        }
+	    }
+	*/
     }
-
     std::queue<Input> q2(q);
     int i = 0;
 
     std::cout << "isnts:" << std::endl;
-    while (i < q2.size())
+    while (!q2.empty())
     {
         printInstructions(q2.front(), i);
         q2.pop();
@@ -269,7 +272,7 @@ int main(int argc, char **argv)
 
     std::cout << "\n";
     std::cout << "data:\n"
-              << std::setw(4) << std::right << gp << ":" << iList[*gp] << std::endl;
+              << std::setw(4) << std::right << ":" << *data << std::endl;
 
     int j = 0;
 
