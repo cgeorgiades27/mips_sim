@@ -128,11 +128,11 @@ std::map<unsigned int, std::string> funct{
 
 unsigned int inst;
 unsigned int word;
-unsigned int gp;
+unsigned int *gp;
+int pc = 0;
 
-//std::queue<Input> q;
+std::queue<Input> q;
 unsigned int data[1];
-std::vector<Input> q;
 std::vector<unsigned int> regs(34, 0);
 std::vector<unsigned int> iList;
 Input input; // Create input object
@@ -154,13 +154,20 @@ int main(int argc, char **argv)
         std::cerr << "file " << argv[1] << " cannot be opened\n";
     }
 
-    int counter1 = 0;
+    int counter = 0;
 
     while (fin.getline(line, MAXLINE))
     {
         if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
-            regs[28] = gp; // set the value of the gp
+            //gp = data;
+            regs[reg.find(*gp)->first] = *gp; // set the value of the gp
+
+            
+
+            std::cout
+                << "gp: " << gp << "\n"
+                << "data[0]: " << data << "\n";
         }
         else // begin parse of object code
         {
@@ -168,20 +175,22 @@ int main(int argc, char **argv)
             iList.push_back(inst);
         }
     }
-    ++counter1;
+    ++counter;
+
+    //unsigned int data[word];
 
     // parse
-    for (int counter2 = 0; counter2 < iList.size() - 1; ++counter2)
+    for (int pc = 0; pc < iList.size() - 1; ++pc)
     {
-        inst = iList[counter2];
+        inst = iList[pc];
 
         if (inst >> 26 == 0)
         {
-            if (inst == 0xc)
+            if (inst == 0x00000000c)
             {
                 input.type = InstructionType::S;
                 input.sData = {inst >> 26};
-                q.push_back(input);
+                q.push(input);
             }
             else
             {
@@ -194,7 +203,7 @@ int main(int argc, char **argv)
                         inst << 16 >> 27,
                         inst << 21 >> 27,
                         inst << 26 >> 26};
-                q.push_back(input);
+                q.push(input);
             }
         }
         else if (inst >> 26 == 2 || inst >> 26 == 3)
@@ -204,7 +213,7 @@ int main(int argc, char **argv)
                 {
                     inst >> 26,
                     inst << 7 >> 7};
-            q.push_back(input);
+            q.push(input);
         }
         else
         {
@@ -215,32 +224,8 @@ int main(int argc, char **argv)
                     inst << 6 >> 27,
                     inst << 11 >> 27,
                     inst << 16 >> 16};
-            q.push_back(input);
-        }
-    } // end parse of object code
-
-    // copy the queue for contents are not lost
-    int i = 0;
-    // begin printing the instruction list
-    std::cout << "isnts:" << std::endl;
-
-    while (i < q.size())
-    {
-        printInstructions(q[i], i);
-        ++i;
-    }
-
-    std::cout
-        << "\n";
-    std::cout << "data:\n"
-              << std::setw(4) << std::right << i << ":" << std::setw(2) << *data << "\n"
-              << std::endl;
-
-    int j = 0;
-
-    for (int pc = 0; pc < iList.size() - 1; ++pc)
-    {
-        inst = iList[pc];
+            q.push(input);
+        } // end parse of object code
 
         switch (inst >> 26) // begin function calls
         {
@@ -273,14 +258,35 @@ int main(int argc, char **argv)
         default:
             break;
         }
+    }
 
-        int j = 0;
+    std::queue<Input> q2(q);
+    int i = 0;
 
-        printAll(q[i], j);
+    std::cout << "isnts:" << std::endl;
+    while (!q2.empty())
+    {
+        printInstructions(q2.front(), i);
+        q2.pop();
+        ++i;
+    }
+
+    std::cout << "\n";
+    std::cout << "data:\n"
+              << std::setw(4) << std::right << i << ":" << std::setw(2) << *data << "\n"
+              << std::endl;
+
+    int j = 0;
+
+    while (!q.empty())
+    {
+        printAll(q.front(), j);
+        q.pop();
         ++j;
     }
+
     return 0;
-} // THE END 
+}
 
 void System_Call::sCall(unsigned int v0)
 {

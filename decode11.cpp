@@ -79,6 +79,7 @@ struct Input
 
 void printAll(Input, int counter);          // print report
 void printInstructions(Input, int counter); // print instruction list
+void parse(Input, unsigned int instruction);
 
 std::map<unsigned int, std::string> reg{
     {0, "$zero"},
@@ -130,9 +131,8 @@ unsigned int inst;
 unsigned int word;
 unsigned int gp;
 
-//std::queue<Input> q;
+std::queue<Input> q;
 unsigned int data[1];
-std::vector<Input> q;
 std::vector<unsigned int> regs(34, 0);
 std::vector<unsigned int> iList;
 Input input; // Create input object
@@ -181,7 +181,7 @@ int main(int argc, char **argv)
             {
                 input.type = InstructionType::S;
                 input.sData = {inst >> 26};
-                q.push_back(input);
+                q.push(input);
             }
             else
             {
@@ -194,7 +194,7 @@ int main(int argc, char **argv)
                         inst << 16 >> 27,
                         inst << 21 >> 27,
                         inst << 26 >> 26};
-                q.push_back(input);
+                q.push(input);
             }
         }
         else if (inst >> 26 == 2 || inst >> 26 == 3)
@@ -204,7 +204,7 @@ int main(int argc, char **argv)
                 {
                     inst >> 26,
                     inst << 7 >> 7};
-            q.push_back(input);
+            q.push(input);
         }
         else
         {
@@ -215,18 +215,19 @@ int main(int argc, char **argv)
                     inst << 6 >> 27,
                     inst << 11 >> 27,
                     inst << 16 >> 16};
-            q.push_back(input);
+            q.push(input);
         }
     } // end parse of object code
 
-    // copy the queue for contents are not lost
+    std::queue<Input> q2(q); // copy the queue for contents are not lost
     int i = 0;
+
     // begin printing the instruction list
     std::cout << "isnts:" << std::endl;
-
-    while (i < q.size())
+    while (!q2.empty())
     {
-        printInstructions(q[i], i);
+        printInstructions(q2.front(), i);
+        q2.pop();
         ++i;
     }
 
@@ -235,8 +236,6 @@ int main(int argc, char **argv)
     std::cout << "data:\n"
               << std::setw(4) << std::right << i << ":" << std::setw(2) << *data << "\n"
               << std::endl;
-
-    int j = 0;
 
     for (int pc = 0; pc < iList.size() - 1; ++pc)
     {
@@ -276,11 +275,56 @@ int main(int argc, char **argv)
 
         int j = 0;
 
-        printAll(q[i], j);
+        printAll(q.front(), j);
+        q.pop();
         ++j;
     }
     return 0;
-} // THE END 
+} // end of program
+
+void parse(Input, unsigned int instruction)
+{
+    unsigned int inst = instruction;
+
+    if (inst >> 26 == 0)
+    {
+        if (inst == 0xc)
+        {
+            input.type = InstructionType::S;
+            input.sData = {inst >> 26};
+        }
+        else
+        {
+            input.type = InstructionType::R;
+            input.rData =
+                {
+                    inst >> 26,
+                    inst << 6 >> 27,
+                    inst << 11 >> 27,
+                    inst << 16 >> 27,
+                    inst << 21 >> 27,
+                    inst << 26 >> 26};
+        }
+    }
+    else if (inst >> 26 == 2 || inst >> 26 == 3)
+    {
+        input.type = InstructionType::J;
+        input.jData =
+            {
+                inst >> 26,
+                inst << 7 >> 7};
+    }
+    else
+    {
+        input.type = InstructionType::I;
+        input.iData =
+            {
+                inst >> 26,
+                inst << 6 >> 27,
+                inst << 11 >> 27,
+                inst << 16 >> 16};
+    }
+}
 
 void System_Call::sCall(unsigned int v0)
 {
