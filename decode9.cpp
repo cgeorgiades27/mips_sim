@@ -4,6 +4,7 @@
  *  Chris Georgiades
  *  CDA3101 - asg 3
  *  main.cpp
+ *  compile: g++ -o decode.exe decode.cpp
  *
  ******************************/
 
@@ -12,10 +13,7 @@
 #include <iomanip>
 #include <queue>
 #include <fstream>
-
 #define MAXLINE 80
-
-// global variables
 
 enum class InstructionType
 {
@@ -47,8 +45,8 @@ struct I_Format
     unsigned int immed_;
     void printI();
     void addiu();
-    void lw(unsigned int rt_, unsigned int immed_, unsigned int *gp);
-    void sw(unsigned int rt_, unsigned int immed_, unsigned int *gp);
+    void lw(unsigned int rt_, unsigned int immed_, unsigned int arr[]);
+  void sw(unsigned int rt_, unsigned int immed_, unsigned int arr[]);
 };
 
 struct J_Format
@@ -77,7 +75,7 @@ struct Input
     };
 };
 
-void printAll(Input, int counter);          // print report
+void printAll(Input, int counter, unsigned int arr[]);          // print report
 void printInstructions(Input, int counter); // print instruction list
 
 std::map<unsigned int, std::string> reg{
@@ -140,247 +138,253 @@ char line[MAXLINE];
 
 int main(int argc, char **argv)
 {
-    if (argc == 1) // test for argument usage
+  if (argc == 1) // test for argument usage
     {
-        std::cerr << "usage: " << argv[0] << " <name>.obj\n";
-        exit(EXIT_FAILURE);
+      std::cerr << "usage: " << argv[0] << " <name>.obj\n";
+      exit(EXIT_FAILURE);
+    }
+  
+  std::ifstream fin;
+  fin.open(argv[1]);
+    
+  if (!fin.is_open()) // test to see if file exists
+    {
+      std::cerr << "file " << argv[1] << " cannot be opened\n";
     }
 
-    std::ifstream fin;
-    fin.open(argv[1]);
+  int counter1 = 0;
 
-    if (!fin.is_open()) // test to see if file exists
+  while (fin.getline(line, MAXLINE))
     {
-        std::cerr << "file " << argv[1] << " cannot be opened\n";
-    }
-
-    int counter1 = 0;
-
-    while (fin.getline(line, MAXLINE))
-    {
-        if (sscanf(line, "%u%u", &gp, &word) == 2)
+      if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
-            regs[28] = gp; // set the value of the gp
+	  regs[28] = gp; // set the value of the gp
         }
-        else // begin parse of object code
+      else // begin parse of object code
         {
-            sscanf(line, "%x", &inst);
-            iList.push_back(inst);
+	  sscanf(line, "%x", &inst);
+	  iList.push_back(inst);
         }
     }
-    ++counter1;
+  ++counter1;
 
-    // parse
-    for (int counter2 = 0; counter2 < iList.size() - 1; ++counter2)
+  // parse
+  for (int counter2 = 0; counter2 < iList.size() - 1; ++counter2)
     {
-        inst = iList[counter2];
-
-        if (inst >> 26 == 0)
+      inst = iList[counter2];
+      
+      if (inst >> 26 == 0)
         {
-            if (inst == 0xc)
+	  if (inst == 0xc)
             {
-                input.type = InstructionType::S;
-                input.sData = {inst >> 26};
-                q.push_back(input);
+	      input.type = InstructionType::S;
+	      input.sData = {inst >> 26};
+	      q.push_back(input);
             }
-            else
+	  else
             {
-                input.type = InstructionType::R;
-                input.rData =
-                    {
-                        inst >> 26,
-                        inst << 6 >> 27,
-                        inst << 11 >> 27,
-                        inst << 16 >> 27,
-                        inst << 21 >> 27,
-                        inst << 26 >> 26};
-                q.push_back(input);
+	      input.type = InstructionType::R;
+	      input.rData =
+		{
+		  inst >> 26,
+		  inst << 6 >> 27,
+		  inst << 11 >> 27,
+		  inst << 16 >> 27,
+		  inst << 21 >> 27,
+		  inst << 26 >> 26};
+	      q.push_back(input);
             }
         }
-        else if (inst >> 26 == 2 || inst >> 26 == 3)
+      else if (inst >> 26 == 2 || inst >> 26 == 3)
         {
-            input.type = InstructionType::J;
-            input.jData =
-                {
-                    inst >> 26,
-                    inst << 7 >> 7};
-            q.push_back(input);
+	  input.type = InstructionType::J;
+	  input.jData =
+	    {
+	      inst >> 26,
+	      inst << 7 >> 7};
+	  q.push_back(input);
         }
-        else
+      else
         {
-            input.type = InstructionType::I;
-            input.iData =
-                {
-                    inst >> 26,
-                    inst << 6 >> 27,
-                    inst << 11 >> 27,
-                    inst << 16 >> 16};
-            q.push_back(input);
+	  input.type = InstructionType::I;
+	  input.iData =
+	    {
+	      inst >> 26,
+	      inst << 6 >> 27,
+	      inst << 11 >> 27,
+	      inst << 16 >> 16};
+	  q.push_back(input);
         }
     } // end parse of object code
 
-    // copy the queue for contents are not lost
-    int i = 0;
-    // begin printing the instruction list
-    std::cout << "isnts:" << std::endl;
+  // copy the queue for contents are not lost
+  int i = 0;
+  // begin printing the instruction list
+  std::cout << "isnts:" << std::endl;
 
-    while (i < q.size())
+  while (i < q.size())
     {
-        printInstructions(q[i], i);
-        ++i;
+      printInstructions(q[i], i);
+      ++i;
     }
 
-    std::cout
-        << "\n";
-    std::cout << "data:\n"
-              << std::setw(4) << std::right << i << ":" << std::setw(2) << *data << "\n"
-              << std::endl;
+  std::cout
+    << "\n";
+  std::cout << "data:\n"
+	    << std::setw(4) << std::right << i << ":" << std::setw(2) << *data << "\n"
+	    << std::endl;
 
-    int j = 0;
 
-    for (int pc = 0; pc < iList.size() - 1; ++pc)
+  for (int pc = 0, j = 0; pc < iList.size() - 1; ++pc, ++j)
     {
-        inst = iList[pc];
+      inst = iList[pc];
 
-        switch (inst >> 26) // begin function calls
+      switch (inst >> 26) // begin function calls
         {
         case 0: // R_Format and Syscalls
-        {
-            if (input.rData.funct_ == 33)
-                input.rData.add();
-            else if (input.rData.funct_ == 42)
-                input.rData.slt(input.rData.rd_, input.rData.rs_, input.rData.rt_);
+	  {
+            if (q[pc].rData.funct_ == 33)
+	      q[pc].rData.add();
+            else if (q[pc].rData.funct_ == 42)
+	      q[pc].rData.slt(q[pc].rData.rd_, q[pc].rData.rs_, q[pc].rData.rt_);
             else
-                input.sData.sCall(regs[2]); // hard coded to $v0
+	      q[pc].sData.sCall(regs[2]); // hard coded to $v0
             break;
-        }
+	  }
         case 9:
-        {
-            input.iData.addiu();
+	  {
+            q[pc].iData.addiu();
             break;
-        }
+	  }
         case 2:
-        {
+	  {
             break;
-        }
+	  }
         case 4:
-        {
+	  {
             break;
-        }
+	  }
         case 35:
-        {
-        }
+	  {
+	    q[pc].iData.lw(q[pc].iData.rt_, q[pc].iData.immed_, data);
+	    break;
+	  }
+	case 43:
+	  {
+	    q[pc].iData.sw(q[pc].iData.rt_, q[pc].iData.immed_, data);
+	    break;
+	  }
         default:
-            break;
+	  break;
         }
 
-        int j = 0;
-
-        printAll(q[i], j);
-        ++j;
+      printAll(q[pc], j, data);
+      ++j;
     }
-    return 0;
+  return 0;
 } // THE END 
 
 void System_Call::sCall(unsigned int v0)
 {
-    switch (v0)
+  switch (v0)
     {
     case 10: // exit
-    {
+      {
         exit(EXIT_SUCCESS);
         break;
-    }
+      }
     case 5: // read input
-    {
-        scanf("%u", &v0);
-        break;
-    }
+      {
+	std::cin << v0;
+	break;
+      }
     default: // print
-    {
+      {
         std::cout << v0 << "\n";
         break;
-    }
+      }
     }
 }
 
-void I_Format::lw(unsigned int rt_, unsigned int immed_, unsigned int *gp)
+void I_Format::lw(unsigned int rt_, unsigned int immed_, unsigned int arr[])
 {
-    regs[reg.find(rt_)->first] = *(gp + immed_);
+  regs[reg.find(rt_)->first] = arr[(4*immed_)];
+  //regs[reg.find(rt_)->first] = *(gp + immed_);
 }
 
-void I_Format::sw(unsigned int rt_, unsigned int immed_, unsigned int *gp)
+void I_Format::sw(unsigned int rt_, unsigned int immed_, unsigned int arr[])
 {
-    *(gp + immed_) = regs[reg.find(rt_)->first];
+  arr[(4*immed_)] = regs[reg.find(rt_)->first];
+  //*(gp + 4 * immed_) = regs[reg.find(rt_)->first];
 }
 
 void R_Format::slt(unsigned int rd_, unsigned int rs_, unsigned int rt_)
 {
-    if (regs[reg.find(rs_)->first] < regs[reg.find(rt_)->first])
-        regs[reg.find(rd_)->first] = 1;
-    else
-        regs[reg.find(rd_)->first] = 0;
+  if (regs[reg.find(rs_)->first] < regs[reg.find(rt_)->first])
+    regs[reg.find(rd_)->first] = 1;
+  else
+    regs[reg.find(rd_)->first] = 0;
 }
 
 void R_Format::add()
 {
-    regs[reg.find(rd_)->first] = regs[reg.find(rs_)->first] + regs[reg.find(rt_)->first];
+  regs[reg.find(rd_)->first] = regs[reg.find(rs_)->first] + regs[reg.find(rt_)->first];
 }
 
 void I_Format::addiu()
 {
-    regs[reg.find(rt_)->first] = regs[reg.find(rs_)->first] + immed_;
+  regs[reg.find(rt_)->first] = regs[reg.find(rs_)->first] + immed_;
 }
 
 void R_Format::printR()
 {
-    std::cout << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << std::endl;
+  std::cout << std::setw(10) << std::left << funct[funct_] << reg[rd_] + "," + reg[rs_] + "," + reg[rt_] << std::endl;
 }
 
 void I_Format::printI()
 {
-    switch (opcode_)
+  switch (opcode_)
     {
     case 35:
     case 43:
-    {
+      {
         std::cout
-            << std::setw(10)
-            << std::left
-            << funct[opcode_]
-            << reg[rt_] << ","
-            << immed_
-            << "(" << reg[rs_] << ")" << std::endl;
+	  << std::setw(10)
+	  << std::left
+	  << funct[opcode_]
+	  << reg[rt_] << ","
+	  << immed_
+	  << "(" << reg[rs_] << ")" << std::endl;
         break;
-    }
+      }
     case 4:
-    {
+      {
         std::cout
-            << std::setw(10)
-            << std::left
-            << funct[opcode_]
-            << reg[rs_] << ","
-            << reg[rt_] << ","
-            << immed_ << std::endl;
+	  << std::setw(10)
+	  << std::left
+	  << funct[opcode_]
+	  << reg[rs_] << ","
+	  << reg[rt_] << ","
+	  << immed_ << std::endl;
         break;
-    }
+      }
     default:
-    {
+      {
         std::cout
-            << std::setw(10)
-            << std::left
-            << funct[opcode_]
-            << reg[rt_] << ","
-            << reg[rs_] << ","
-            << immed_ << std::endl;
+	  << std::setw(10)
+	  << std::left
+	  << funct[opcode_]
+	  << reg[rt_] << ","
+	  << reg[rs_] << ","
+	  << immed_ << std::endl;
         break;
-    }
+      }
     }
 }
 
 void J_Format::printJ()
 {
-    std::cout << std::setw(10) << std::left << funct[opcode_] << addr_ << std::endl;
+  std::cout << std::setw(10) << std::left << funct[opcode_] << addr_ << std::endl;
 }
 
 void System_Call::printS()
@@ -388,18 +392,18 @@ void System_Call::printS()
     std::cout << "syscall" << std::endl;
 }
 
-void printAll(Input input, int counter)
+void printAll(Input input, int counter, unsigned int arr[])
 {
     std::cout
         << "PC:" << std::right << std::setw(3) << counter << std::endl
         << "inst: ";
 
     switch (input.type)
-    {
-    case InstructionType::R:
-    {
-        input.rData.printR();
-        break;
+      {
+      case InstructionType::R:
+	{
+	  input.rData.printR();
+	  break;
     }
     case InstructionType::S:
     {
@@ -431,7 +435,8 @@ void printAll(Input input, int counter)
             std::cout << std::endl;
     }
     std::cout << std::endl
-              << std::endl;
+	      << "data[ 0]: " << arr[0] 
+	      << std::endl;
 
     printf("\n");
 }
