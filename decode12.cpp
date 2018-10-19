@@ -53,7 +53,7 @@ struct J_Format
 {
   unsigned int opcode_;
   unsigned int addr_;
-  void printJ(std::ofstream log);
+  void printJ();
   void j(unsigned int immed_);
 };
 
@@ -137,7 +137,6 @@ std::vector<Input> q;
 std::vector<unsigned int> regs(34, 0);
 std::vector<unsigned int> iList;
 Input input; // Create input object
-std::ofstream log ("log.txt");
 char line[MAXLINE];
 
 int main(int argc, char **argv)
@@ -163,8 +162,7 @@ int main(int argc, char **argv)
       if (sscanf(line, "%u%u", &gp, &word) == 2)
         {
 	  regs[28] = gp; 
-	  printf("gp: %u word: %u\n", gp, word);
-        }
+	}
       else
         {
 	  sscanf(line, "%x", &inst);
@@ -175,9 +173,7 @@ int main(int argc, char **argv)
   
   unsigned int data[word];
   data[0] = iList[regs[28]];
-
-  printf("gp: %u word: %u regs[28]: %u\n", gp, word, regs[28]);
-				 
+  
   // parse
   for (int counter2 = 0; counter2 < iList.size() - 1; ++counter2)
     {
@@ -232,27 +228,20 @@ int main(int argc, char **argv)
 	  q.push_back(input);
         }
     } // end parse of object code
-
+  
   int i = 0;
   
-  if (log.is_open())   // begin printing the instruction list
+  std::cout << "isnts:" << std::endl;
+  
+  while (i < q.size())
     {
-      log << "isnts:" << std::endl;
-
-      while (i < q.size())
-	{
-    if (input.type == InstructionType::J)
-	    log << std::setw(10) << std::left << funct[input.jData.opcode_] << input.jData.addr_ << std::endl;
-	  //printInstructions(q[i], i);
-	  ++i;
-	}
-      
-      log << "\n"
-	  << "data:\n"
-	  << std::setw(4) << std::right << i << ":" << std::setw(2) << *data << "\n"
-	  << std::endl;
+      printInstructions(q[i], i);
+      ++i;
     }
-  log.close();
+  std::cout << "\n"
+	    << "data:\n"
+	    << std::setw(4) << std::right << i << ":" << std::setw(2) << *data << "\n"
+	    << std::endl;
   
   for (int pc = 0, j = 0; pc < iList.size() - 1; ++pc, ++j)
     {
@@ -311,7 +300,7 @@ int main(int argc, char **argv)
 	  break;
         }
 
-      //printAll(q[pc], j, data);
+      printAll(q[pc], j, data);
     }
   return 0;
 } // THE END 
@@ -427,9 +416,9 @@ void I_Format::printI()
     }
 }
 
-void J_Format::printJ(std::ofstream log)
+void J_Format::printJ()
 {
-  log << std::setw(10) << std::left << funct[opcode_] << addr_ << std::endl;
+  std::cout << std::setw(10) << std::left << funct[opcode_] << addr_ << std::endl;
 }
 
 void System_Call::printS()
@@ -462,7 +451,7 @@ void printAll(Input input, int counter, unsigned int arr[])
       }
     default:
       {
-        //input.jData.printJ();
+        input.jData.printJ();
         break;
       }
     } // end of switch
@@ -511,7 +500,7 @@ void printInstructions(Input input, int counter)
       }
     default:
       {
-        //input.jData.printJ();
+        input.jData.printJ();
         break;
       }
     }

@@ -182,6 +182,7 @@ regs:
 data memory:
    data[  0] =     3
 
+
 PC: 9
 inst: syscall
 
@@ -666,9 +667,3 @@ regs:
 
 data memory:
    data[  0] =     3
-
-
-PC: 17
-inst: syscall
-exiting simulator
-
