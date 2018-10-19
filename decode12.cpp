@@ -299,7 +299,6 @@ int main(int argc, char **argv)
         default:
 	  break;
         }
-
       printAll(q[pc], j, data);
     }
   return 0;
