@@ -42,8 +42,6 @@ struct I_Format
   unsigned int immed_;
   void printI();
   void addiu();
-  void lw(unsigned int rt_, unsigned int rs__, unsigned int immed_, unsigned int arr[]);
-  void sw(unsigned int rt_, unsigned int rs_, unsigned int immed_, unsigned int arr[]);
 };
 
 struct J_Format
@@ -72,10 +70,11 @@ struct Input
   };
 };
 
-void printAll(Input, int counter, unsigned int arr[]); // print report
+void printAll(Input, int counter, std::vector<unsigned int>); // print report
 void printInstructions(Input, int counter);            // print instruction list
 
-std::map<unsigned int, std::string> reg{
+std::map<unsigned int, std::string> reg
+{
   {0, "$zero"},
   {1, "$at"},
   {2, "$v0"},
@@ -114,20 +113,29 @@ std::map<unsigned int, std::string> reg{
 
 std::map<unsigned int, std::string> funct
 {
-  {9, "addiu"},
-  {33, "addu"},
-  {4, "beq"},
   {2, "j"},
+  {4, "beq"},
+  {5, "bne"},
+  {9, "addiu"},
+  {12, "syscall"},
+  {16, "mfhi"},
+  {18, "mflo"},
+  {24, "mult"},
+  {26, "div"},
+  {33, "addu"},
+  {34, "subu"},
   {35, "lw"},
+  {36, "and"},
+  {37, "or"},
   {42, "slt"},
-  {43, "sw"},
-  {12, "syscall"}
+  {43, "sw"}
 };
 
 unsigned int inst;
 unsigned int word;
 unsigned int gp;
 
+std::vector<unsigned int> data(32768);
 std::vector<Input> q;
 std::vector<unsigned int> regs(34, 0);
 std::vector<unsigned int> iList;
@@ -167,8 +175,10 @@ int main(int argc, char **argv)
   }
   ++counter1;
 
-  unsigned int data[word];
-  data[0] = iList[regs[28]];
+  data.resize(word);
+
+  for (int k = 0; k < data.size(); ++k)
+         data[k] = iList[regs[28] + k];
 
   // parse
   for (int counter2 = 0; counter2 < iList.size() - 1; ++counter2)
@@ -228,16 +238,21 @@ int main(int argc, char **argv)
   {
     log << "isnts:" << std::endl;
 
-    while (i < q.size())
+    while (i < regs[28])
     {
       printInstructions(q[i], i);
       ++i;
     }
 
     log << "\n"
-        << "data:\n"
-        << std::setw(4) << std::right << i << ":" << std::setw(2) << *data << "\n"
-        << std::endl;
+        << "data:\n";
+
+    for (int k = 0; k < data.size(); ++k)
+    { 
+      log << std::setw(4) << std::right << i + k << ": " << std::setw(2) << data[k] << std::endl;
+    }
+
+    log << "\n";
 
     for (int pc = 0; pc < iList.size(); ++pc) // function call loop
     {
@@ -250,45 +265,85 @@ int main(int argc, char **argv)
         case 0:
           {
             unsigned int funct = inst << 26 >> 26;
+            
+            switch (funct)
+            {
+              case 12: // syscalls                                                                                                        
+                {
+                  if (regs[2] == 10)
+                  {
+                    log
+                      << "PC:" << std::setw(2) << std::right << pc << std::endl
+                      << "inst: ";
+                    q[pc].sData.printS();
 
-            if (funct == 33)
-            {
-              q[pc].rData.add();
-            }
-            else if (funct == 42)
-            {
-              q[pc].rData.slt(q[pc].rData.rd_, q[pc].rData.rs_, q[pc].rData.rt_);
-            }
-            else if (inst == 0xc) // syscalls
-            {
-              if (regs[2] == 10)
-              {
-                log
-                  << "PC:" << std::setw(3) << std::right << pc << std::endl
-                  << "inst: ";
-						
-                q[pc].sData.printS();
-						
-                log << "exiting simulator\n";
-                exit(EXIT_SUCCESS);
-              }
-              else if (regs[2] == 5)
-              {
-                std::cin >> regs[2];
-              }
-              else
-              {
-                std::cout << regs[4] << "\n";
-              }
+                    log << "exiting simulator\n";
+                    exit(EXIT_SUCCESS);
+                  }
+
+                  else if (regs[2] == 5)
+                  {
+                    std::cin >> regs[2];
+                  }
+                  else
+                  {
+                    std::cout << regs[4] << "\n";
+                  }
+                  break;
+                }
+              case 16:
+                {
+                  regs[q[pc].rData.rd_] = data[36];
+                  break;
+                }
+              case 18:
+                {
+                  regs[q[pc].rData.rd_] = data[35];
+                  break;
+                }
+              case 24:
+                {
+                  regs[35] = regs[q[pc].rData.rs_] * regs[q[pc].rData.rt_];
+                  break;
+                }
+              case 26:
+                {
+                  regs[35] = regs[q[pc].rData.rs_] / regs[q[pc].rData.rt_];
+                  break;
+                }
+              case 33:
+                {
+                  q[pc].rData.add();
+                  break;
+                }
+              case 34:
+                {
+                  regs[q[pc].rData.rd_] = regs[q[pc].rData.rs_] - regs[q[pc].rData.rt_];
+                  break;
+                }
+              case 36:
+                {
+                  regs[q[pc].rData.rd_] = regs[q[pc].rData.rs_] & regs[q[pc].rData.rt_];
+                  break;
+                }
+              case 37:
+                {
+                  regs[q[pc].rData.rd_] = regs[q[pc].rData.rs_] | regs[q[pc].rData.rt_];
+                  break;
+                }
+              case 42:
+                {
+                  q[pc].rData.slt(q[pc].rData.rd_, q[pc].rData.rs_, q[pc].rData.rt_);
+                  break;
+                }
+              default:
+                {
+                  break;
+                }
             }
             break;
           }
-        case 9:
-          {
-            q[pc].iData.addiu();
-            break;
-          }
-        case 2:
+         case 2:
           {
             printAll(q[pc], pc, data);
             pc = q[pc].jData.addr_;
@@ -297,7 +352,7 @@ int main(int argc, char **argv)
           }
         case 4:
           {
-            if (regs[reg.find(q[pc].iData.rt_)->first] == regs[reg.find(q[pc].iData.rs_)->first])
+            if (regs[q[pc].iData.rt_] == regs[q[pc].iData.rs_])
             {
               printAll(q[pc], pc, data);
               pc += q[pc].iData.immed_;
@@ -305,14 +360,29 @@ int main(int argc, char **argv)
             }
             break;
           }
+        case 5:
+          {
+            if (regs[q[pc].iData.rt_] != regs[q[pc].iData.rs_])
+            {
+              printAll(q[pc], pc, data);
+              pc += q[pc].iData.immed_;
+              goto Loop;
+            }
+            break;
+          }
+       case 9:
+          {
+            q[pc].iData.addiu();
+            break;
+          }
         case 35:
           {
-            q[pc].iData.lw(q[pc].iData.rt_, q[pc].iData.rs_, q[pc].iData.immed_, data);
+            regs[q[pc].iData.rt_] = data[q[pc].iData.immed_];
             break;
           }
         case 43:
           {
-            q[pc].iData.sw(q[pc].iData.rt_, q[pc].iData.rs_, q[pc].iData.immed_, data);
+            data[q[pc].iData.immed_] = regs[q[pc].iData.rt_];
             break;
           }
         default:
@@ -329,32 +399,22 @@ int main(int argc, char **argv)
   return 0;
 } // THE END
 
-void I_Format::lw(unsigned int rt_, unsigned int rs_, unsigned int immed_, unsigned int arr[])
-{
-  regs[reg.find(rt_)->first] = arr[immed_ / 4];
-}
-
-void I_Format::sw(unsigned int rt_, unsigned int rs_, unsigned int immed_, unsigned int arr[])
-{
-  arr[immed_ / 4] = regs[reg.find(rt_)->first];
-}
-
 void R_Format::slt(unsigned int rd_, unsigned int rs_, unsigned int rt_)
 {
-  if (regs[reg.find(rs_)->first] < regs[reg.find(rt_)->first])
-    regs[reg.find(rd_)->first] = 1;
+  if (regs[rs_] < regs[rt_])
+    regs[rd_] = 1;
   else
-    regs[reg.find(rd_)->first] = 0;
+    regs[rd_] = 0;
 }
 
 void R_Format::add()
 {
-  regs[reg.find(rd_)->first] = regs[reg.find(rs_)->first] + regs[reg.find(rt_)->first];
+  regs[rd_] = regs[rs_] + regs[rt_];
 }
 
 void I_Format::addiu()
 {
-  regs[reg.find(rt_)->first] = regs[reg.find(rs_)->first] + immed_;
+  regs[rt_] = regs[rs_] + immed_;
 }
 
 void R_Format::printR()
@@ -413,10 +473,10 @@ void System_Call::printS()
   log << "syscall" << std::endl;
 }
 
-void printAll(Input input, int counter, unsigned int arr[])
+void printAll(Input input, int counter, std::vector<unsigned int> arr)
 {
   log
-    << "PC:" << std::setw(3) << std::right << counter << std::endl
+    << "PC:" << std::setw(2) << std::right << counter << std::endl
     << "inst: ";
 
   switch (input.type)
@@ -455,17 +515,26 @@ void printAll(Input input, int counter, unsigned int arr[])
     if (j % 4 == 0)
       log << std::endl;
   }
-
+  
   log << "\n\n"
-      << "data memory:\n"
-      << "   data[  0] =" << std::setw(6) << std::right << arr[0]
-      << "\n\n\n";
+      << "data memory:\n";
+
+  for (int i = 0; i < arr.size(); ++i)
+  {
+    
+    log
+      << "   data[" << std::setw(3) << i << "] =" 
+      << std::setw(6) << std::right << arr[i]
+      << "  ";
+  }
+
+  log << "\n\n\n";
 }
 
 void printInstructions(Input input, int counter)
 {
   log
-    << std::setw(2) << std::right << counter << std::setw(2) << std::left << ":";
+    << std::setw(4) << std::right << counter << std::setw(2) << std::left << ":";
 
   switch (input.type)
   {
