@@ -1,11 +1,9 @@
-/******************************
- *
- *  Chris Georgiades
- *  CDA3101 - asg 3 (MIPS Simulator)
- *  sim.cpp
- *  compile: g++ -o sim.exe sim.cpp
- *
- ******************************/
+/************************************
+ *  Chris Georgiades                *
+ *  MIPS Simulator                  *
+ *  sim.cpp                         * 
+ *  compile: g++ -o sim.exe sim.cpp *
+ ************************************/
 
 #include <iostream>
 #include <map>
